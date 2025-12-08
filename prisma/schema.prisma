@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Symbol {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(10)
+  code1       String?  @db.VarChar(5)
+  code2       String?  @db.VarChar(5)
+  code3       String?  @db.VarChar(5)
+  note        String?  @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transactions Transaction[]
+
+  @@index([name])
+}
+
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  symbolId  Int
+  symbol    Symbol   @relation(fields: [symbolId], references: [id], onDelete: Cascade)
+  date      DateTime
+  type      String   @db.Char(1)
+  price     Float
+  quantity  Float
+  balance   Float?
+  note      String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([symbolId])
+  @@index([date])
+}
