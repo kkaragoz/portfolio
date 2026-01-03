@@ -4,12 +4,12 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const data = await prisma.$queryRaw`
-      SELECT * FROM rep_grid
+      SELECT * FROM rep_grid ORDER BY code
     `;
 
     return NextResponse.json(Array.isArray(data) ? data : []);
   } catch (error) {
     console.error('rep_grid error:', error);
-    return NextResponse.json([], { status: 200 });
+    return NextResponse.json({ error: 'Veri alınamadı' }, { status: 500 });
   }
 }

@@ -16,8 +16,8 @@ model Symbol {
   code         String?       @db.VarChar(10)
   code1        BIRIM?
   code2        Tur?
-  transactions Transaction[]
   prices       Price[]
+  transactions Transaction[]
 
   @@index([name])
 }
@@ -68,19 +68,4 @@ enum Tur {
   EUROBOND
   KARMA
   COIN
-}
-
-model vw_balance {
-  id                     Int       @id
-  name                   String
-  code                   String?
-  code1                  String?
-  code2                  String?
-  code3                  String?
-  note                   String?
-  balance                Float
-  last_transaction_date  DateTime?
-  market_category        String?   @db.Char(1)
-
-  @@map("vw_balance")
 }

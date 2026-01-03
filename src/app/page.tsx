@@ -26,6 +26,11 @@ interface MarketRates {
   btcUsd: number | null;
 }
 
+interface PortfolioSummary {
+  portfolio_cost: number;
+  portfolio_value: number;
+}
+
 export default function Home() {
   const [stats, setStats] = useState<Stats>({
     totalSymbols: 0,
@@ -41,10 +46,16 @@ export default function Home() {
     btcUsd: null,
   });
   const [marketRatesLoading, setMarketRatesLoading] = useState(true);
+  const [portfolioSummary, setPortfolioSummary] = useState<PortfolioSummary>({
+    portfolio_cost: 0,
+    portfolio_value: 0,
+  });
+  const [portfolioLoading, setPortfolioLoading] = useState(true);
 
   useEffect(() => {
     fetchStats();
     fetchMarketRates();
+    fetchPortfolioSummary();
   }, []);
 
   const fetchStats = async () => {
@@ -86,6 +97,22 @@ export default function Home() {
       console.error('Error fetching market rates:', error);
     } finally {
       setMarketRatesLoading(false);
+    }
+  };
+
+  const fetchPortfolioSummary = async () => {
+    try {
+      const response = await fetch('/api/reports/summary');
+      const data = await response.json();
+      
+      setPortfolioSummary({
+        portfolio_cost: data.portfolio_cost || 0,
+        portfolio_value: data.portfolio_value || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching portfolio summary:', error);
+    } finally {
+      setPortfolioLoading(false);
     }
   };
 
@@ -287,6 +314,67 @@ export default function Home() {
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Bitcoin anlık fiyatı
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Portfolio Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Portfolio Cost Card */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl shadow-sm p-6 border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
+                Portföy
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Toplam Maliyet
+              </h3>
+            </div>
+            <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
+              <Package className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-4xl font-bold text-gray-900 dark:text-white">
+              {portfolioLoading ? (
+                <span className="animate-pulse">...</span>
+              ) : (
+                `$${portfolioSummary.portfolio_cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              )}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Portföy toplam alış maliyeti
+            </p>
+          </div>
+        </div>
+
+        {/* Portfolio Value Card */}
+        <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/20 rounded-xl shadow-sm p-6 border border-violet-200 dark:border-violet-800">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-medium text-violet-600 dark:text-violet-400 mb-1">
+                Portföy
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Piyasa Değeri
+              </h3>
+            </div>
+            <div className="bg-violet-100 dark:bg-violet-900/30 p-3 rounded-lg">
+              <Activity className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-4xl font-bold text-gray-900 dark:text-white">
+              {portfolioLoading ? (
+                <span className="animate-pulse">...</span>
+              ) : (
+                `$${portfolioSummary.portfolio_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              )}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Portföy güncel piyasa değeri
             </p>
           </div>
         </div>
