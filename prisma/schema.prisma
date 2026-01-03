@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,33 +7,80 @@ datasource db {
 }
 
 model Symbol {
-  id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(10)
-  code1       String?  @db.VarChar(5)
-  code2       String?  @db.VarChar(5)
-  code3       String?  @db.VarChar(5)
-  note        String?  @db.VarChar(255)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id           Int           @id @default(autoincrement())
+  name         String        @db.VarChar(255)
+  code3        String?       @db.VarChar(5)
+  note         String?       @db.VarChar(255)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime?     @updatedAt
+  code         String?       @db.VarChar(10)
+  code1        BIRIM?
+  code2        Tur?
   transactions Transaction[]
+  prices       Price[]
 
   @@index([name])
 }
 
 model Transaction {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   symbolId  Int
-  symbol    Symbol   @relation(fields: [symbolId], references: [id], onDelete: Cascade)
   date      DateTime
-  type      String   @db.Char(1)
+  type      String    @db.Char(1)
   price     Float
   quantity  Float
   balance   Float?
-  note      String?  @db.VarChar(255)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  note      String?   @db.VarChar(255)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  symbol    Symbol    @relation(fields: [symbolId], references: [id], onDelete: Cascade)
 
   @@index([symbolId])
   @@index([date])
+}
+
+model Price {
+  id        Int       @id @default(autoincrement())
+  symbolId  Int
+  date      DateTime  @db.Date
+  price     Float
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  symbol    Symbol    @relation(fields: [symbolId], references: [id], onDelete: Cascade)
+
+  @@unique([symbolId, date])
+  @@index([symbolId])
+  @@index([date])
+}
+
+enum BIRIM {
+  TL
+  Doviz @map("Döviz")
+  Karma
+}
+
+enum Tur {
+  BIST
+  YABANCI_BORSA  @map("YABANCI BORSA")
+  KIYMETLI_METAL @map("KIYMETLI METAL")
+  EMTIA
+  PARA_PIYASASI  @map("PARA PIYASASI")
+  EUROBOND
+  KARMA
+  COIN
+}
+
+model vw_balance {
+  id                     Int       @id
+  name                   String
+  code                   String?
+  code1                  String?
+  code2                  String?
+  code3                  String?
+  note                   String?
+  balance                Float
+  last_transaction_date  DateTime?
+  market_category        String?   @db.Char(1)
+
+  @@map("vw_balance")
 }
