@@ -319,11 +319,12 @@ export async function POST() {
           orderBy: { date: 'desc' }
         });
 
-        // Bugünün tarihi (sadece tarih kısmı, saat olmadan)
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Bugünün tarihi (sadece tarih kısmı, UTC kullanarak)
+        const now = new Date();
+        const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
         console.log(`  💾 Veritabanına kaydediliyor...`);
+        console.log(`  📅 Kayıt Tarihi: ${today.toISOString().split('T')[0]}`);
         if (lastTransaction?.price) {
           const change = parseFloat((((priceToSave - lastTransaction.price) / lastTransaction.price * 100).toFixed(2)));
           console.log(`  Son Fiyat: ${lastTransaction.price.toFixed(4)} USD → Yeni Fiyat: ${priceToSave.toFixed(4)} USD (${change > 0 ? '+' : ''}${change.toFixed(2)}%)`);
@@ -380,6 +381,43 @@ export async function POST() {
       results.filter(r => !r.success).forEach(r => {
         console.log(`  - ${r.symbol} (${r.code}): ${r.error}`);
       });
+    }
+
+    // Portföy değerini hesapla ve kaydet
+    try {
+      console.log('\n=== Portföy Değeri Hesaplanıyor ===');
+      const portfolioResult = await prisma.$queryRaw<[{ portfolio_value: number }]>`
+        SELECT SUM(market_value) AS portfolio_value FROM rep_grid
+      `;
+      
+      const portfolioValue = portfolioResult[0]?.portfolio_value ?? 0;
+      console.log(`💰 Toplam Portföy Değeri: ${portfolioValue.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`);
+      
+      // Bugünün tarihini al (UTC kullanarak)
+      const now = new Date();
+      const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+      console.log(`📅 Snapshot Tarihi: ${today.toISOString().split('T')[0]}`);
+      
+      // Upsert: Bugüne ait kayıt varsa güncelle, yoksa yeni kayıt ekle
+      const snapshot = await prisma.portfolioSnapshot.upsert({
+        where: { date: today },
+        update: { 
+          value: portfolioValue,
+          updatedAt: new Date()
+        },
+        create: {
+          date: today,
+          value: portfolioValue
+        }
+      });
+      
+      console.log(`✅ Portföy değeri kaydedildi (ID: ${snapshot.id})`);
+    } catch (snapshotError) {
+      console.error('⚠️ Portföy değeri kaydedilemedi:', snapshotError);
+      if (snapshotError instanceof Error) {
+        console.error('   Hata detayı:', snapshotError.message);
+        console.error('   Stack:', snapshotError.stack);
+      }
     }
     
     return NextResponse.json({

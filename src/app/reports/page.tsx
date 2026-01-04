@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Treemap } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Treemap, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface GridData {  
   code: string | null;
@@ -24,23 +24,34 @@ interface ExchangeData {
   value: number;
 }
 
+interface PortfolioHistory {
+  id: number;
+  date: string;
+  value: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
 
 export default function ReportsPage() {
   const [gridData, setGridData] = useState<GridData[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [exchangeData, setExchangeData] = useState<ExchangeData[]>([]);
+  const [portfolioHistory, setPortfolioHistory] = useState<PortfolioHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       fetch('/api/reports/grid').then(r => r.json()),
       fetch('/api/reports/category').then(r => r.json()),
-      fetch('/api/reports/exchange').then(r => r.json())
-    ]).then(([grid, category, exchange]) => {
+      fetch('/api/reports/exchange').then(r => r.json()),
+      fetch('/api/reports/portfolio-history').then(r => r.json())
+    ]).then(([grid, category, exchange, history]) => {
       setGridData(Array.isArray(grid) ? grid : []);
       setCategoryData(Array.isArray(category) ? category : []);
       setExchangeData(Array.isArray(exchange) ? exchange : []);
+      setPortfolioHistory(Array.isArray(history) ? history : []);
       setLoading(false);
     }).catch(err => {
       console.error('Veri yüklenirken hata:', err);
@@ -78,7 +89,7 @@ export default function ReportsPage() {
   }));
 
   const formatCurrency = (value: number) => {
-    return value;
+    return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
   };
 
   const CustomTreemapContent = (props: any) => {
@@ -243,6 +254,44 @@ export default function ReportsPage() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
+          </div>
+        </div>
+
+        {/* 5. Portföy Değeri Grafiği */}
+        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+          <h2 className="text-2xl font-bold mb-4">Portföy Değeri Grafiği</h2>
+          <div className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={portfolioHistory.map(item => ({
+                date: new Date(item.date).toLocaleDateString('tr-TR'),
+                value: item.value
+              }))}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fill: '#64748b' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis 
+                  tick={{ fill: '#64748b' }}
+                  tickFormatter={(value) => formatCurrency(value)}
+                />
+                <Tooltip 
+                  formatter={(value: any) => formatCurrency(Number(value))}
+                  labelStyle={{ color: '#1e293b' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="#0088FE" 
+                  strokeWidth={2}
+                  dot={{ fill: '#0088FE', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>

@@ -468,9 +468,6 @@ export default function TransactionsPage() {
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Miktar
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Bakiye
-                </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Not
                 </th>
@@ -482,7 +479,7 @@ export default function TransactionsPage() {
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <ArrowLeftRight className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>Henüz işlem eklenmemiş</p>
                   </td>
@@ -525,9 +522,6 @@ export default function TransactionsPage() {
                     </td>
                     <td className="px-6 py-4 text-right text-gray-700 dark:text-gray-300 font-mono">
                       {transaction.quantity.toFixed(4)}
-                    </td>
-                    <td className="px-6 py-4 text-right text-gray-700 dark:text-gray-300 font-mono">
-                      {transaction.balance ? transaction.balance.toFixed(6) : '-'}
                     </td>
                     <td className="px-6 py-4 text-gray-700 dark:text-gray-300 max-w-xs truncate">
                       {transaction.note || '-'}
