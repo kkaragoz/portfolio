@@ -151,8 +151,8 @@ export default function Home() {
       value: stats.totalSymbols,
       icon: Tag,
       color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50 dark:bg-blue-950/20",
-      iconColor: "text-blue-600 dark:text-blue-400",
+      bgColor: "bg-blue-50",
+      iconColor: "text-blue-600",
       link: "/symbols"
     },
     {
@@ -160,8 +160,8 @@ export default function Home() {
       value: stats.totalTransactions,
       icon: ArrowLeftRight,
       color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50 dark:bg-purple-950/20",
-      iconColor: "text-purple-600 dark:text-purple-400",
+      bgColor: "bg-purple-50",
+      iconColor: "text-purple-600",
       link: "/transactions"
     },
     {
@@ -169,8 +169,8 @@ export default function Home() {
       value: stats.totalBuyTransactions,
       icon: TrendingUp,
       color: "from-green-500 to-green-600",
-      bgColor: "bg-green-50 dark:bg-green-950/20",
-      iconColor: "text-green-600 dark:text-green-400",
+      bgColor: "bg-green-50",
+      iconColor: "text-green-600",
       link: "/transactions"
     },
     {
@@ -178,8 +178,8 @@ export default function Home() {
       value: stats.totalSellTransactions,
       icon: TrendingDown,
       color: "from-red-500 to-red-600",
-      bgColor: "bg-red-50 dark:bg-red-950/20",
-      iconColor: "text-red-600 dark:text-red-400",
+      bgColor: "bg-red-50",
+      iconColor: "text-red-600",
       link: "/transactions"
     },
   ];
@@ -212,10 +212,10 @@ export default function Home() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Dashboard
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600">
           Portföy yönetim sisteminize hoş geldiniz
         </p>        
       </div>
@@ -228,22 +228,22 @@ export default function Home() {
             <Link
               key={index}
               href={card.link}
-              className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
+              className="group relative bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200"
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className={`${card.bgColor} p-3 rounded-lg`}>
                     <Icon className={`w-6 h-6 ${card.iconColor}`} />
                   </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-sm text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
                     Detay →
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600">
                     {card.title}
                   </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-3xl font-bold text-gray-900">
                     {loading ? "..." : card.value}
                   </p>
                 </div>
@@ -257,22 +257,22 @@ export default function Home() {
       {/* Market Rates Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* USD/TRY Card */}
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl shadow-sm p-6 border border-emerald-200 dark:border-emerald-800">
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl shadow-sm p-6 border border-emerald-200">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-1">
+              <p className="text-sm font-medium text-emerald-600 mb-1">
                 Döviz Kuru
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-2xl font-bold text-gray-900">
                 USD/TRY
               </h3>
             </div>
-            <div className="bg-emerald-100 dark:bg-emerald-900/30 p-3 rounded-lg">
-              <DollarSign className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+            <div className="bg-emerald-100 p-3 rounded-lg">
+              <DollarSign className="w-8 h-8 text-emerald-600" />
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900 dark:text-white">
+            <p className="text-4xl font-bold text-gray-900">
               {marketRatesLoading ? (
                 <span className="animate-pulse">...</span>
               ) : marketRates.usdTry ? (
@@ -281,29 +281,29 @@ export default function Home() {
                 <span className="text-2xl text-gray-400">Veri yok</span>
               )}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500">
               Anlık döviz kuru bilgisi
             </p>
           </div>
         </div>
 
         {/* BTC/USD Card */}
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-xl shadow-sm p-6 border border-amber-200 dark:border-amber-800">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-sm p-6 border border-amber-200">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">
+              <p className="text-sm font-medium text-amber-600 mb-1">
                 Kripto Para
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-2xl font-bold text-gray-900">
                 BTC/USD
               </h3>
             </div>
-            <div className="bg-amber-100 dark:bg-amber-900/30 p-3 rounded-lg">
-              <TrendingUp className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+            <div className="bg-amber-100 p-3 rounded-lg">
+              <TrendingUp className="w-8 h-8 text-amber-600" />
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900 dark:text-white">
+            <p className="text-4xl font-bold text-gray-900">
               {marketRatesLoading ? (
                 <span className="animate-pulse">...</span>
               ) : marketRates.btcUsd ? (
@@ -312,7 +312,7 @@ export default function Home() {
                 <span className="text-2xl text-gray-400">Veri yok</span>
               )}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500">
               Bitcoin anlık fiyatı
             </p>
           </div>
@@ -322,58 +322,58 @@ export default function Home() {
       {/* Portfolio Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Portfolio Cost Card */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl shadow-sm p-6 border border-blue-200 dark:border-blue-800">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm p-6 border border-blue-200">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
+              <p className="text-sm font-medium text-blue-600 mb-1">
                 Portföy
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-2xl font-bold text-gray-900">
                 Toplam Maliyet
               </h3>
             </div>
-            <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
-              <Package className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="bg-blue-100 p-3 rounded-lg">
+              <Package className="w-8 h-8 text-blue-600" />
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900 dark:text-white">
+            <p className="text-4xl font-bold text-gray-900">
               {portfolioLoading ? (
                 <span className="animate-pulse">...</span>
               ) : (
                 `$${portfolioSummary.portfolio_cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               )}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500">
               Portföy toplam alış maliyeti
             </p>
           </div>
         </div>
 
         {/* Portfolio Value Card */}
-        <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/20 rounded-xl shadow-sm p-6 border border-violet-200 dark:border-violet-800">
+        <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl shadow-sm p-6 border border-violet-200">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-violet-600 dark:text-violet-400 mb-1">
+              <p className="text-sm font-medium text-violet-600 mb-1">
                 Portföy
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-2xl font-bold text-gray-900">
                 Piyasa Değeri
               </h3>
             </div>
-            <div className="bg-violet-100 dark:bg-violet-900/30 p-3 rounded-lg">
-              <Activity className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+            <div className="bg-violet-100 p-3 rounded-lg">
+              <Activity className="w-8 h-8 text-violet-600" />
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900 dark:text-white">
+            <p className="text-4xl font-bold text-gray-900">
               {portfolioLoading ? (
                 <span className="animate-pulse">...</span>
               ) : (
                 `$${portfolioSummary.portfolio_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               )}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500">
               Portföy güncel piyasa değeri
             </p>
           </div>
@@ -382,7 +382,7 @@ export default function Home() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Hızlı İşlemler
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -392,15 +392,15 @@ export default function Home() {
               <Link
                 key={index}
                 href={action.href}
-                className="group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700"
+                className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-6 border border-gray-200"
               >
                 <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${action.color} mb-4`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                   {action.title}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600">
                   {action.description}
                 </p>
               </Link>
@@ -410,18 +410,18 @@ export default function Home() {
       </div>
 
       {/* Price Update Card */}
-      <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-xl shadow-sm p-6 border border-orange-200 dark:border-orange-800">
+      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl shadow-sm p-6 border border-orange-200">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Fiyat Güncellemeleri
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600">
               Portföyünüzdeki varlıkların güncel fiyatlarını alın
             </p>
           </div>
-          <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg">
-            <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+          <div className="bg-orange-100 p-3 rounded-lg">
+            <DollarSign className="w-6 h-6 text-orange-600" />
           </div>
         </div>
         
@@ -435,29 +435,29 @@ export default function Home() {
         </button>
 
         {priceUpdateResult && (
-          <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-800">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="mt-4 p-4 bg-white rounded-lg border border-orange-200">
+            <p className="text-sm text-gray-700">
               {priceUpdateResult}
             </p>
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-800">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-4 pt-4 border-t border-orange-200">
+          <p className="text-xs text-gray-500">
             Kaynak: BIST (Borsa İstanbul), TEFAS, ve Kripto Para Borsaları
           </p>
         </div>
       </div>
 
       {/* Recent Activity Placeholder */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-gray-900">
             Son Aktiviteler
           </h2>
           <Activity className="w-5 h-5 text-gray-400" />
         </div>
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-8 text-gray-500">
           <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p>Henüz aktivite bulunmuyor</p>
         </div>

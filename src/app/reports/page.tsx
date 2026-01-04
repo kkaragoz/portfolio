@@ -64,7 +64,7 @@ export default function ReportsPage() {
       <div className="p-6 md:p-8">
         <div className="max-w-[1400px] mx-auto">
           <h1 className="text-3xl font-bold mb-8">Raporlar</h1>
-          <p className="text-slate-600 dark:text-slate-400">Yükleniyor...</p>
+          <p className="text-slate-600">Yükleniyor...</p>
         </div>
       </div>
     );
@@ -133,11 +133,11 @@ export default function ReportsPage() {
         <h1 className="text-3xl font-bold mb-8">Raporlar</h1>
 
         {/* 1. Portföy Grid */}
-        <div className="mb-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+        <div className="mb-8 bg-white rounded-lg shadow-md p-6">
           <h2 className="text-2xl font-bold mb-4">Portföy Detayları</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-100 dark:bg-slate-700">
+              <thead className="bg-slate-100">
                 <tr>
                   <th className="px-4 py-3 text-left">Kod</th>
                   <th className="px-4 py-3 text-right">Bakiye</th>
@@ -149,10 +149,10 @@ export default function ReportsPage() {
                   <th className="px-4 py-3 text-right">Kar/Zarar %</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              <tbody className="divide-y divide-slate-200">
                 {[...gridData].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => {                  
                   return (
-                  <tr key={item.code} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                  <tr key={item.code} className="hover:bg-slate-50">
   <td className="px-4 py-3 font-medium">{item.code}</td>
   
   {/* Bakiye için formatCurrency kullanımı tutarlılık sağlar */}
@@ -165,14 +165,14 @@ export default function ReportsPage() {
   
   {/* Kar/Zarar Tutarı - Boş olan hücre düzeltildi */}
   <td className={`px-4 py-3 text-right font-semibold ${
-    (item.profit_loss ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+    (item.profit_loss ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
   }`}>
     {formatCurrency(item.profit_loss ?? 0)}
   </td>
 
   {/* Kar/Zarar Oranı (%) */}
   <td className={`px-4 py-3 text-right font-semibold ${
-    (item.profit_loss_pct ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+    (item.profit_loss_pct ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
   }`}>
     {(item.profit_loss_pct ?? 0) >= 0 ? '+' : ''}
     {(item.profit_loss_pct ?? 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
@@ -186,7 +186,7 @@ export default function ReportsPage() {
         </div>
 
         {/* 2. Treemap - Kod ve Piyasa Değeri */}
-        <div className="mb-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+        <div className="mb-8 bg-white rounded-lg shadow-md p-6">
           <h2 className="text-2xl font-bold mb-4">Portföy Dağılımı</h2>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -203,7 +203,7 @@ export default function ReportsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 3. Kategori Pie Chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold mb-4">Kategori Dağılımı</h2>
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -230,7 +230,7 @@ export default function ReportsPage() {
           </div>
 
           {/* 4. Borsa Pie Chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold mb-4">Borsa Dağılımı</h2>
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -258,7 +258,7 @@ export default function ReportsPage() {
         </div>
 
         {/* 5. Portföy Değeri Grafiği */}
-        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+        <div className="mt-8 bg-white rounded-lg shadow-md p-6">
           <h2 className="text-2xl font-bold mb-4">Portföy Değeri Grafiği</h2>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">

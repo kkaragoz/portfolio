@@ -157,32 +157,32 @@ export default function Header() {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={onInputKeyDown}
               placeholder="Sembol ara... (örn: AAPL, Tesla)"
-              className="w-full pl-4 pr-10 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent focus:border-blue-500 dark:focus:border-blue-400 rounded-lg text-sm outline-none transition-colors text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full pl-4 pr-10 py-2 bg-gray-100 border border-transparent focus:border-blue-500 rounded-lg text-sm outline-none transition-colors text-gray-900 placeholder-gray-500"
             />
           </div>
 
           {/* Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-80 overflow-auto">
+            <div className="absolute z-50 left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-auto">
               {suggestions.map((s, idx) => (
                 <div
                   key={s.id}
                   data-index={idx}
-                  className={`px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                    activeIndex === idx ? 'bg-gray-100 dark:bg-gray-700' : ''
+                  className={`px-4 py-3 cursor-pointer hover:bg-gray-100 transition-colors ${
+                    activeIndex === idx ? 'bg-gray-100' : ''
                   }`}
                   onClick={() => selectSuggestion(s)}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                    <div className="font-semibold text-sm text-gray-900">
                       {s.name}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-xs text-gray-500">
                       {s.code || s.code1 || s.code2 || s.code3 || '-'}
                     </div>
                   </div>
                   {s.note && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <div className="text-xs text-gray-500 mt-1">
                       {s.note}
                     </div>
                   )}
