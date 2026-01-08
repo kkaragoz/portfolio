@@ -40,6 +40,8 @@ export default function ReportsPage() {
   const [exchangeData, setExchangeData] = useState<ExchangeData[]>([]);
   const [portfolioHistory, setPortfolioHistory] = useState<PortfolioHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currency, setCurrency] = useState<'USD' | 'TRY'>('USD');
+  const [usdTry, setUsdTry] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -57,6 +59,22 @@ export default function ReportsPage() {
       console.error('Veri yüklenirken hata:', err);
       setLoading(false);
     });
+  }, []);
+
+  // USD/TRY kurunu dashboard ile aynı kaynaktan çek
+  useEffect(() => {
+    const fetchRates = async () => {
+      try {
+        const res = await fetch('/api/market/rates');
+        const data = await res.json();
+        if (typeof data.usdTry === 'number') {
+          setUsdTry(data.usdTry);
+        }
+      } catch (e) {
+        console.error('Kur bilgisi alınamadı:', e);
+      }
+    };
+    fetchRates();
   }, []);
 
   if (loading) {
@@ -90,6 +108,14 @@ export default function ReportsPage() {
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+  };
+
+  const applyCurrency = (value: number | null) => {
+    const v = value ?? 0;
+    if (currency === 'TRY' && usdTry) {
+      return v * usdTry;
+    }
+    return v;
   };
 
   const CustomTreemapContent = (props: any) => {
@@ -134,18 +160,34 @@ export default function ReportsPage() {
 
         {/* 1. Portföy Grid */}
         <div className="mb-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-4">Portföy Detayları</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Portföy Detayları</h2>
+            <div className="flex items-center gap-3">              
+              <div className="inline-flex rounded-md border border-slate-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setCurrency('USD')}
+                  className={`w-16 py-1 text-sm ${currency === 'USD' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}
+                >USD</button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency('TRY')}
+                  className={`w-16 py-1 text-sm ${currency === 'TRY' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}
+                >TL</button>
+              </div>              
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-100">
                 <tr>
                   <th className="px-4 py-3 text-left">Kod</th>
                   <th className="px-4 py-3 text-right">Bakiye</th>
-                  <th className="px-4 py-3 text-right">Ort. Maliyet</th>
-                  <th className="px-4 py-3 text-right">Güncel Fiyat</th>
-                  <th className="px-4 py-3 text-right">Toplam Maliyet</th>
-                  <th className="px-4 py-3 text-right">Piyasa Değeri</th>
-                  <th className="px-4 py-3 text-right">Kar/Zarar</th>
+                  <th className="px-4 py-3 text-right">Ort. Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right">Güncel Fiyat {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right">Toplam Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right">Piyasa Değeri {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right">Kar/Zarar {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
                   <th className="px-4 py-3 text-right">Kar/Zarar %</th>
                 </tr>
               </thead>
@@ -158,16 +200,16 @@ export default function ReportsPage() {
   {/* Bakiye için formatCurrency kullanımı tutarlılık sağlar */}
   <td className="px-4 py-3 text-right">{formatCurrency(item.balance ?? 0)}</td>
   
-  <td className="px-4 py-3 text-right">{formatCurrency(item.average_cost ?? 0)}</td>
-  <td className="px-4 py-3 text-right">{formatCurrency(item.current_price ?? 0)}</td>
-  <td className="px-4 py-3 text-right">{formatCurrency(item.total_cost ?? 0)}</td>
-  <td className="px-4 py-3 text-right font-semibold">{formatCurrency(item.market_value ?? 0)}</td>
+  <td className="px-4 py-3 text-right">{formatCurrency(applyCurrency(item.average_cost))}</td>
+  <td className="px-4 py-3 text-right">{formatCurrency(applyCurrency(item.current_price))}</td>
+  <td className="px-4 py-3 text-right">{formatCurrency(applyCurrency(item.total_cost))}</td>
+  <td className="px-4 py-3 text-right font-semibold">{formatCurrency(applyCurrency(item.market_value))}</td>
   
   {/* Kar/Zarar Tutarı - Boş olan hücre düzeltildi */}
   <td className={`px-4 py-3 text-right font-semibold ${
     (item.profit_loss ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'
   }`}>
-    {formatCurrency(item.profit_loss ?? 0)}
+    {formatCurrency(applyCurrency(item.profit_loss))}
   </td>
 
   {/* Kar/Zarar Oranı (%) */}
