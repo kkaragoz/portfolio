@@ -448,20 +448,6 @@ export default function Home() {
           </p>
         </div>
       </div>
-
-      {/* Recent Activity Placeholder */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Son Aktiviteler
-          </h2>
-          <Activity className="w-5 h-5 text-gray-400" />
-        </div>
-        <div className="text-center py-8 text-gray-500">
-          <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>Henüz aktivite bulunmuyor</p>
-        </div>
-      </div>
     </div>
   );
 }
