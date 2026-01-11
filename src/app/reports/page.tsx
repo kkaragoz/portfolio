@@ -27,14 +27,12 @@ interface PerformanceData {
 
 interface CategoryData {
   category: string;
-  symbol_count: number;
-  total_value: number;
+  value: number;
 }
 
 interface ExchangeData {
-  exchange: string;
-  symbol_count: number;
-  total_value: number;
+  unit: string;
+  value: number;
 }
 
 interface PortfolioHistory {
@@ -147,12 +145,12 @@ export default function ReportsPage() {
 
   const categoryChartData = categoryData.map(item => ({
     name: item.category,
-    value: item.total_value
+    value: item.value
   }));
 
   const exchangeChartData = exchangeData.map(item => ({
-    name: item.exchange,
-    value: item.total_value
+    name: item.unit,
+    value: item.value
   }));
 
   const formatCurrency = (value: number) => {
