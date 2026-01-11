@@ -81,8 +81,8 @@ export default function ReportsPage() {
     return (
       <div className="p-6 md:p-8">
         <div className="max-w-[1400px] mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Raporlar</h1>
-          <p className="text-slate-600">Yükleniyor...</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">Raporlar</h1>
+          <p className="text-slate-600 dark:text-slate-400">Yükleniyor...</p>
         </div>
       </div>
     );
@@ -156,54 +156,54 @@ export default function ReportsPage() {
   return (
     <div className="p-6 md:p-8">
       <div className="max-w-[1400px] mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Raporlar</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">Raporlar</h1>
 
         {/* 1. Portföy Grid */}
-        <div className="mb-8 bg-white rounded-lg shadow-md p-6">
+        <div className="mb-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Portföy Detayları</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Portföy Detayları</h2>
             <div className="flex items-center gap-3">              
-              <div className="inline-flex rounded-md border border-slate-200 overflow-hidden">
+              <div className="inline-flex rounded-md border border-slate-200 dark:border-slate-600 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setCurrency('USD')}
-                  className={`w-16 py-1 text-sm ${currency === 'USD' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}
+                  className={`w-16 py-1 text-sm ${currency === 'USD' ? 'bg-slate-900 dark:bg-slate-600 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}
                 >USD</button>
                 <button
                   type="button"
                   onClick={() => setCurrency('TRY')}
-                  className={`w-16 py-1 text-sm ${currency === 'TRY' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}
+                  className={`w-16 py-1 text-sm ${currency === 'TRY' ? 'bg-slate-900 dark:bg-slate-600 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}
                 >TL</button>
               </div>              
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-100">
+              <thead className="bg-slate-100 dark:bg-slate-700">
                 <tr>
-                  <th className="px-4 py-3 text-left">Kod</th>
-                  <th className="px-4 py-3 text-right">Bakiye</th>
-                  <th className="px-4 py-3 text-right">Ort. Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right">Güncel Fiyat {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right">Toplam Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right">Piyasa Değeri {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right">Kar/Zarar {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right">Kar/Zarar %</th>
+                  <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">Kod</th>
+                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Bakiye</th>
+                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Ort. Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Güncel Fiyat {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Toplam Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Piyasa Değeri {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Kar/Zarar {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Kar/Zarar %</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {[...gridData].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => {                  
                   return (
-                  <tr key={item.code} className="hover:bg-slate-50">
-  <td className="px-4 py-3 font-medium">{item.code}</td>
+                  <tr key={item.code} className="hover:bg-slate-50 dark:hover:bg-slate-700">
+  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.code}</td>
   
   {/* Bakiye için formatCurrency kullanımı tutarlılık sağlar */}
-  <td className="px-4 py-3 text-right">{formatCurrency(item.balance ?? 0)}</td>
+  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(item.balance ?? 0)}</td>
   
-  <td className="px-4 py-3 text-right">{formatCurrency(applyCurrency(item.average_cost))}</td>
-  <td className="px-4 py-3 text-right">{formatCurrency(applyCurrency(item.current_price))}</td>
-  <td className="px-4 py-3 text-right">{formatCurrency(applyCurrency(item.total_cost))}</td>
-  <td className="px-4 py-3 text-right font-semibold">{formatCurrency(applyCurrency(item.market_value))}</td>
+  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(applyCurrency(item.average_cost))}</td>
+  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(applyCurrency(item.current_price))}</td>
+  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(applyCurrency(item.total_cost))}</td>
+  <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(applyCurrency(item.market_value))}</td>
   
   {/* Kar/Zarar Tutarı - Boş olan hücre düzeltildi */}
   <td className={`px-4 py-3 text-right font-semibold ${
@@ -228,8 +228,8 @@ export default function ReportsPage() {
         </div>
 
         {/* 2. Treemap - Kod ve Piyasa Değeri */}
-        <div className="mb-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-4">Portföy Dağılımı</h2>
+        <div className="mb-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Portföy Dağılımı</h2>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <Treemap
@@ -245,8 +245,8 @@ export default function ReportsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 3. Kategori Pie Chart */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold mb-4">Kategori Dağılımı</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Kategori Dağılımı</h2>
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -272,8 +272,8 @@ export default function ReportsPage() {
           </div>
 
           {/* 4. Borsa Pie Chart */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold mb-4">Borsa Dağılımı</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Borsa Dağılımı</h2>
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -300,8 +300,8 @@ export default function ReportsPage() {
         </div>
 
         {/* 5. Portföy Değeri Grafiği */}
-        <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-4">Portföy Değeri Grafiği</h2>
+        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Portföy Değeri Grafiği</h2>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={portfolioHistory.map(item => ({

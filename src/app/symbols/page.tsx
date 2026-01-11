@@ -172,20 +172,20 @@ export default function SymbolsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-gray-500">Yükleniyor...</div>
+        <div className="animate-pulse text-gray-500 dark:text-gray-400">Yüklen iyor...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Sembol Tanımları
           </h1>
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
             Toplam {symbols.length} sembol
           </p>
         </div>
@@ -205,21 +205,21 @@ export default function SymbolsPage() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-slate-700">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               {editingId ? 'Sembolü Düzenle' : 'Yeni Sembol Ekle'}
             </h2>
             <button
               onClick={handleCancel}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Kod
               </label>
               <input
@@ -227,13 +227,13 @@ export default function SymbolsPage() {
                 maxLength={10}
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
                 placeholder="Örn: AAPL"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Sembol Adı *
               </label>
               <input
@@ -242,18 +242,18 @@ export default function SymbolsPage() {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Birim
               </label>
               <select
                 value={formData.code1}
                 onChange={(e) => setFormData({ ...formData, code1: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
               >
                 <option value="">Seçiniz</option>
                 <option value="TL">TL</option>
@@ -263,13 +263,13 @@ export default function SymbolsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Tür
               </label>
               <select
                 value={formData.code2}
                 onChange={(e) => setFormData({ ...formData, code2: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
               >
                 <option value="">Seçiniz</option>
                 <option value="BIST">BIST</option>
@@ -284,7 +284,7 @@ export default function SymbolsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Kod 3
               </label>
               <input
@@ -292,20 +292,20 @@ export default function SymbolsPage() {
                 maxLength={5}
                 value={formData.code3}
                 onChange={(e) => setFormData({ ...formData, code3: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
                 placeholder="1-2-3"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Not
               </label>
               <textarea
                 maxLength={255}
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-900"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-900 dark:text-gray-100"
                 rows={3}
               />
             </div>
@@ -330,38 +330,38 @@ export default function SymbolsPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Kod
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Adı
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Birim
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Tür
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Kod 3
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Not
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   İşlemler
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
               {symbols.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <Tag className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>Henüz sembol eklenmemiş</p>
                   </td>
@@ -370,39 +370,39 @@ export default function SymbolsPage() {
                 symbols.map((symbol) => (
                   <tr
                     key={symbol.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                     onClick={() => setSelectedSymbol(symbol)}
                   >
-                    <td className="px-6 py-4 text-gray-700">
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                       {symbol.code || '-'}
                     </td>
-                    <td className="px-6 py-4 font-medium text-gray-900">
+                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">
                       {symbol.name}
                     </td>
-                    <td className="px-6 py-4 text-gray-700">
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                       {symbol.code1 ? birimLabels[symbol.code1] : '-'}
                     </td>
-                    <td className="px-6 py-4 text-gray-700">
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                       {symbol.code2 ? turLabels[symbol.code2] : '-'}
                     </td>
-                    <td className="px-6 py-4 text-gray-700">
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                       {symbol.code3 || '-'}
                     </td>
-                    <td className="px-6 py-4 text-gray-700 max-w-xs truncate">
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300 max-w-xs truncate">
                       {symbol.note || '-'}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEdit(symbol); }}
-                          className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors"
+                          className="p-2 text-blue-500 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                           title="Düzenle"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDelete(symbol.id); }}
-                          className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
+                          className="p-2 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                           title="Sil"
                         >
                           <Trash2 size={16} />
@@ -419,13 +419,13 @@ export default function SymbolsPage() {
 
       {/* Detail Panel */}
       {selectedSymbol && (
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-slate-700">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {selectedSymbol.code ? `${selectedSymbol.code} – ${selectedSymbol.name}` : selectedSymbol.name}
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Kodlar: {selectedSymbol.code || '-'} / {selectedSymbol.code1 ? birimLabels[selectedSymbol.code1] : '-'} / {selectedSymbol.code2 ? turLabels[selectedSymbol.code2] : '-'} / {selectedSymbol.code3 || '-'}
               </p>
             </div>
@@ -438,7 +438,7 @@ export default function SymbolsPage() {
               </button>
               <button
                 onClick={() => setSelectedSymbol(null)}
-                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -446,11 +446,11 @@ export default function SymbolsPage() {
           </div>
           {selectedSymbol.note && (
             <div className="mb-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">Not:</h4>
-              <p className="text-sm text-gray-600">{selectedSymbol.note}</p>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Not:</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{selectedSymbol.note}</p>
             </div>
           )}
-          <div className="text-xs text-gray-500 space-y-1">
+          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
             <div>Oluşturuldu: {selectedSymbol.createdAt ? new Date(selectedSymbol.createdAt).toLocaleString('tr-TR') : '-'}</div>
             <div>Güncellendi: {selectedSymbol.updatedAt ? new Date(selectedSymbol.updatedAt).toLocaleString('tr-TR') : '-'}</div>
           </div>
