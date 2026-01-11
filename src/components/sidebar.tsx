@@ -12,9 +12,13 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [overlayOpen, setOverlayOpen] = useState(false);
   const pathname = usePathname();
 
   // Responsive: Auto-collapse on small screens
@@ -53,34 +57,37 @@ export default function Sidebar() {
 
   return (
     <>
+    {/* Desktop Sidebar - Hidden on mobile */}
     <aside
       className={`
-        ${collapsed ? "w-16" : "w-56"}
-        bg-white
-        border-r border-gray-200
+        ${collapsed ? "w-0 lg:w-16" : "w-0 lg:w-64"}
+        bg-white/80 backdrop-blur-xl
+        border-r border-white/20
+        shadow-2xl shadow-blue-500/5
         transition-all duration-300 ease-in-out
-        flex flex-col
-        flex
+        flex-col
+        ${collapsed ? "hidden lg:flex" : "hidden lg:flex"}
         relative
+        z-10
       `}
     >
       {/* Logo */}
-      <div className="h-16 flex items-center px-4 border-b border-gray-200">
+      <div className="h-16 flex items-center px-4 border-b border-white/20">
         {collapsed ? (
           <button
             aria-label="Menüyü genişlet"
-            className="p-2 rounded-md hover:bg-gray-100"
-            onClick={() => setOverlayOpen(true)}
+            className="p-2 rounded-xl hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 transition-all"
+            onClick={onClose}
             title="Menüyü genişlet"
           >
-            <PanelLeftOpen className="w-5 h-5 text-gray-700" />
+            <PanelLeftOpen className="w-5 h-5 text-blue-600" />
           </button>
         ) : (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <TrendingUp className="w-6 h-6 text-white" />
             </div>
-            <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="font-bold text-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
               FinanceApp
             </span>
           </div>
@@ -88,7 +95,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 ${collapsed ? "px-2" : "px-5"} py-8 flex flex-col gap-1`}>
+      <nav className={`flex-1 ${collapsed ? "px-2" : "px-4"} py-6 flex flex-col gap-2`}>
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -98,22 +105,22 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
                 className={`
-                  flex items-center gap-2 px-2 h-12 rounded-lg
-                transition-all duration-200
+                  flex items-center gap-3 px-4 h-12 rounded-xl
+                transition-all duration-300
                 ${isActive 
-                  ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30" 
-                  : "text-gray-700 hover:bg-gray-100"
+                  ? "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-xl shadow-purple-500/40 scale-105" 
+                  : "text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:scale-105 hover:shadow-md"
                 }
                 ${collapsed ? "justify-center" : ""}
               `}
               title={collapsed ? item.label : undefined}
             >
-              <Icon className={`w-5 h-5 ${isActive ? "text-white" : ""} ${collapsed ? "" : "ml-1"}`} />
+              <Icon className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-600"} ${collapsed ? "" : ""}transition-transform duration-300 ${isActive ? "" : "group-hover:scale-110"}`} />
               {!collapsed && (
-                <span className="font-medium text-sm">{item.label}</span>
+                <span className="font-semibold text-sm">{item.label}</span>
               )}
               {!collapsed && isActive && (
-                <span className="ml-auto w-2 h-2 bg-white rounded-full" />
+                <span className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse" />
               )}
             </Link>
           );
@@ -122,33 +129,33 @@ export default function Sidebar() {
 
       {/* Footer */}
       {!collapsed && (
-        <div className="p-4 border-t border-gray-200">
-          <div className="text-xs text-gray-500 text-center">
+        <div className="p-4 border-t border-white/20">
+          <div className="text-xs font-medium text-gray-400 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             v1.0.0
           </div>
         </div>
       )}
     </aside>
 
-    {/* Overlay sidebar for expanded view on small widths */}
-    {overlayOpen && (
-      <div className="fixed inset-0 z-50" onClick={() => setOverlayOpen(false)}>
-        <div className="absolute inset-0 bg-black/40" />
+    {/* Mobile Overlay Sidebar */}
+    {isOpen && (
+      <div className="fixed inset-0 z-[100] lg:hidden" onClick={onClose}>
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
         <aside
-          className="absolute left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-xl"
+          className="absolute left-0 top-0 h-full w-72 bg-white/90 backdrop-blur-xl border-r border-white/20 shadow-2xl z-[101]"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="h-16 flex items-center px-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-white" />
+          <div className="h-16 flex items-center px-4 border-b border-white/20">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-6 h-6 text-white" />
               </div>
-              <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="font-bold text-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 FinanceApp
               </span>
             </div>
           </div>
-          <nav className="flex-1 px-5 py-8 flex flex-col gap-1">
+          <nav className="flex-1 px-4 py-6 flex flex-col gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -157,17 +164,17 @@ export default function Sidebar() {
                   key={item.href}
                   href={item.href}
                   className={`
-                    flex items-center gap-2 px-2 h-12 rounded-lg transition-all duration-200
+                    flex items-center gap-3 px-4 h-12 rounded-xl transition-all duration-300
                     ${isActive 
-                      ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30" 
-                      : "text-gray-700 hover:bg-gray-100"}
+                      ? "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-xl shadow-purple-500/40 scale-105" 
+                      : "text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:scale-105 hover:shadow-md"}
                   `}
-                  onClick={() => setOverlayOpen(false)}
+                  onClick={onClose}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? "text-white" : ""}`} />
-                  <span className="font-medium text-sm">{item.label}</span>
+                  <Icon className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-600"}`} />
+                  <span className="font-semibold text-sm">{item.label}</span>
                   {isActive && (
-                    <span className="ml-auto w-2 h-2 bg-white rounded-full" />
+                    <span className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse" />
                   )}
                 </Link>
               );
