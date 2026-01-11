@@ -209,13 +209,13 @@ export default function Home() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           Dashboard
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-400">
           Portföy yönetim sisteminize hoş geldiniz
         </p>        
       </div>
@@ -228,22 +228,22 @@ export default function Home() {
             <Link
               key={index}
               href={card.link}
-              className="group relative bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200"
+              className="group relative bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 dark:border-slate-700"
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`${card.bgColor} p-3 rounded-lg`}>
-                    <Icon className={`w-6 h-6 ${card.iconColor}`} />
+                  <div className={`${card.bgColor} dark:bg-slate-700 p-3 rounded-lg`}>
+                    <Icon className={`w-6 h-6 ${card.iconColor} dark:brightness-125`} />
                   </div>
-                  <div className="text-sm text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-sm text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                     Detay →
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {card.title}
                   </p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     {loading ? "..." : card.value}
                   </p>
                 </div>
@@ -257,62 +257,62 @@ export default function Home() {
       {/* Market Rates Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* USD/TRY Card */}
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl shadow-sm p-6 border border-emerald-200">
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl shadow-sm p-6 border border-emerald-200 dark:border-emerald-800">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-emerald-600 mb-1">
+              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-1">
                 Döviz Kuru
               </p>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 USD/TRY
               </h3>
             </div>
-            <div className="bg-emerald-100 p-3 rounded-lg">
-              <DollarSign className="w-8 h-8 text-emerald-600" />
+            <div className="bg-emerald-100 dark:bg-emerald-800 p-3 rounded-lg">
+              <DollarSign className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900">
+            <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">
               {marketRatesLoading ? (
                 <span className="animate-pulse">...</span>
               ) : marketRates.usdTry ? (
                 `₺${marketRates.usdTry.toFixed(2)}`
               ) : (
-                <span className="text-2xl text-gray-400">Veri yok</span>
+                <span className="text-2xl text-gray-400 dark:text-gray-500">Veri yok</span>
               )}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Anlık döviz kuru bilgisi
             </p>
           </div>
         </div>
 
         {/* BTC/USD Card */}
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-sm p-6 border border-amber-200">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-sm p-6 border border-amber-200 dark:border-amber-800">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-amber-600 mb-1">
+              <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">
                 Kripto Para
               </p>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 BTC/USD
               </h3>
             </div>
-            <div className="bg-amber-100 p-3 rounded-lg">
-              <TrendingUp className="w-8 h-8 text-amber-600" />
+            <div className="bg-amber-100 dark:bg-amber-800 p-3 rounded-lg">
+              <TrendingUp className="w-8 h-8 text-amber-600 dark:text-amber-400" />
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900">
+            <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">
               {marketRatesLoading ? (
                 <span className="animate-pulse">...</span>
               ) : marketRates.btcUsd ? (
                 `$${marketRates.btcUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
               ) : (
-                <span className="text-2xl text-gray-400">Veri yok</span>
+                <span className="text-2xl text-gray-400 dark:text-gray-500">Veri yok</span>
               )}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Bitcoin anlık fiyatı
             </p>
           </div>
@@ -322,58 +322,58 @@ export default function Home() {
       {/* Portfolio Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Portfolio Cost Card */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm p-6 border border-blue-200">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl shadow-sm p-6 border border-blue-200 dark:border-blue-800">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-blue-600 mb-1">
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
                 Portföy
               </p>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 Toplam Maliyet
               </h3>
             </div>
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Package className="w-8 h-8 text-blue-600" />
+            <div className="bg-blue-100 dark:bg-blue-800 p-3 rounded-lg">
+              <Package className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900">
+            <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">
               {portfolioLoading ? (
                 <span className="animate-pulse">...</span>
               ) : (
                 `$${portfolioSummary.portfolio_cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               )}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Portföy toplam alış maliyeti
             </p>
           </div>
         </div>
 
         {/* Portfolio Value Card */}
-        <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl shadow-sm p-6 border border-violet-200">
+        <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-xl shadow-sm p-6 border border-violet-200 dark:border-violet-800">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-violet-600 mb-1">
+              <p className="text-sm font-medium text-violet-600 dark:text-violet-400 mb-1">
                 Portföy
               </p>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 Piyasa Değeri
               </h3>
             </div>
-            <div className="bg-violet-100 p-3 rounded-lg">
-              <Activity className="w-8 h-8 text-violet-600" />
+            <div className="bg-violet-100 dark:bg-violet-800 p-3 rounded-lg">
+              <Activity className="w-8 h-8 text-violet-600 dark:text-violet-400" />
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900">
+            <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">
               {portfolioLoading ? (
                 <span className="animate-pulse">...</span>
               ) : (
                 `$${portfolioSummary.portfolio_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               )}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Portföy güncel piyasa değeri
             </p>
           </div>
@@ -382,7 +382,7 @@ export default function Home() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Hızlı İşlemler
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -392,15 +392,15 @@ export default function Home() {
               <Link
                 key={index}
                 href={action.href}
-                className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-6 border border-gray-200"
+                className="group bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-6 border border-gray-200 dark:border-slate-700"
               >
                 <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${action.color} mb-4`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   {action.title}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {action.description}
                 </p>
               </Link>
@@ -410,18 +410,18 @@ export default function Home() {
       </div>
 
       {/* Price Update Card */}
-      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl shadow-sm p-6 border border-orange-200">
+      <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl shadow-sm p-6 border border-orange-200 dark:border-orange-800">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               Fiyat Güncellemeleri
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Portföyünüzdeki varlıkların güncel fiyatlarını alın
             </p>
           </div>
-          <div className="bg-orange-100 p-3 rounded-lg">
-            <DollarSign className="w-6 h-6 text-orange-600" />
+          <div className="bg-orange-100 dark:bg-orange-800 p-3 rounded-lg">
+            <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />
           </div>
         </div>
         
@@ -435,15 +435,15 @@ export default function Home() {
         </button>
 
         {priceUpdateResult && (
-          <div className="mt-4 p-4 bg-white rounded-lg border border-orange-200">
-            <p className="text-sm text-gray-700">
+          <div className="mt-4 p-4 bg-white dark:bg-slate-800 rounded-lg border border-orange-200 dark:border-orange-700">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
               {priceUpdateResult}
             </p>
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-orange-200">
-          <p className="text-xs text-gray-500">
+        <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Kaynak: BIST (Borsa İstanbul), TEFAS, ve Kripto Para Borsaları
           </p>
         </div>

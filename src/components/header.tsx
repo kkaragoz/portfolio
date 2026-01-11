@@ -144,14 +144,14 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
   }, [activeIndex]);
 
   return (
-    <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm px-6 flex items-center gap-4 relative z-20">
+    <header className="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-white/20 dark:border-slate-700/50 shadow-sm px-6 flex items-center gap-4 relative z-20">
       {/* Hamburger Menu Button - Mobile Only */}
       <button
         onClick={onToggleSidebar}
-        className="lg:hidden p-2 rounded-xl hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 transition-all"
+        className="lg:hidden p-2 rounded-xl hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all"
         aria-label="Menüyü aç"
       >
-        <Menu className="w-6 h-6 text-gray-700" />
+        <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
       </button>
       
       {/* Search Bar */}
@@ -162,7 +162,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           className="relative"
         >
           <div className="relative">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
             <input
               ref={inputRef}
               type="text"
@@ -170,32 +170,32 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={onInputKeyDown}
               placeholder="Sembol ara... (örn: AAPL, Tesla)"
-              className="w-full pl-5 pr-12 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-transparent focus:border-blue-400 focus:shadow-lg focus:shadow-blue-200/50 rounded-xl text-sm outline-none transition-all text-gray-900 placeholder-gray-500 font-medium"
+              className="w-full pl-5 pr-12 py-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-700 dark:to-slate-600 border-2 border-transparent focus:border-blue-400 dark:focus:border-blue-500 focus:shadow-lg focus:shadow-blue-200/50 dark:focus:shadow-blue-500/20 rounded-xl text-sm outline-none transition-all text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 font-medium"
             />
           </div>
 
           {/* Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-[60] left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl max-h-80 overflow-auto">
+            <div className="absolute z-[60] left-0 right-0 mt-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 rounded-2xl shadow-2xl max-h-80 overflow-auto">
               {suggestions.map((s, idx) => (
                 <div
                   key={s.id}
                   data-index={idx}
-                  className={`px-5 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${
-                    activeIndex === idx ? 'bg-gradient-to-r from-blue-50 to-purple-50 scale-[0.98]' : ''
+                  className={`px-5 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-200 ${
+                    activeIndex === idx ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-700 dark:to-slate-600 scale-[0.98]' : ''
                   } first:rounded-t-2xl last:rounded-b-2xl`}
                   onClick={() => selectSuggestion(s)}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold text-sm text-gray-900">
+                    <div className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                       {s.name}
                     </div>
-                    <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+                    <div className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-lg">
                       {s.code || s.code1 || s.code2 || s.code3 || '-'}
                     </div>
                   </div>
                   {s.note && (
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {s.note}
                     </div>
                   )}
