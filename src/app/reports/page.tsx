@@ -56,7 +56,6 @@ export default function ReportsPage() {
   const [selectedSymbol, setSelectedSymbol] = useState<{ code: string; symbolId: number } | null>(null);
   const [performanceData, setPerformanceData] = useState<PerformanceData | null>(null);
   const [loadingPerformance, setLoadingPerformance] = useState(false);
-  const [changeData, setChangeData] = useState<Map<number, number | null>>(new Map());
 
   useEffect(() => {
     Promise.all([
@@ -64,29 +63,11 @@ export default function ReportsPage() {
       fetch('/api/reports/category').then(r => r.json()),
       fetch('/api/reports/exchange').then(r => r.json()),
       fetch('/api/reports/portfolio-history').then(r => r.json())
-    ]).then(async ([grid, category, exchange, history]) => {
-      const gridArray = Array.isArray(grid) ? grid : [];
-      setGridData(gridArray);
+    ]).then(([grid, category, exchange, history]) => {
+      setGridData(Array.isArray(grid) ? grid : []);
       setCategoryData(Array.isArray(category) ? category : []);
       setExchangeData(Array.isArray(exchange) ? exchange : []);
       setPortfolioHistory(Array.isArray(history) ? history : []);
-      
-      // Her sembol için değişim verilerini çek
-      const changes = new Map<number, number | null>();
-      await Promise.all(
-        gridArray.map(async (item: GridData) => {
-          if (item.symbol_id) {
-            try {
-              const res = await fetch(`/api/symbols/${item.symbol_id}/performance`);
-              const data = await res.json();
-              changes.set(item.symbol_id, data.change_latest);
-            } catch (e) {
-              changes.set(item.symbol_id, null);
-            }
-          }
-        })
-      );
-      setChangeData(changes);
       setLoading(false);
     }).catch(err => {
       console.error('Veri yüklenirken hata:', err);
@@ -126,8 +107,6 @@ export default function ReportsPage() {
   };
 
   const handleRowClick = async (item: GridData) => {
-    // symbol_id'yi kod üzerinden bul (API'den gelmiyor, symbols tablosundan çekmek gerekecek)
-    // Şimdilik code'dan symbol ID'yi çıkarmaya çalışalım veya API'yi güncelleyelim
     if (item.symbol_id) {
       setSelectedSymbol({ code: item.code || '', symbolId: item.symbol_id });
       await fetchPerformance(item.symbol_id);
@@ -257,7 +236,6 @@ export default function ReportsPage() {
                   <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Piyasa Değeri {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
                   <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Kar/Zarar {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
                   <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Kar/Zarar %</th>
-                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Değişim %</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -291,24 +269,6 @@ export default function ReportsPage() {
   }`}>
     {(item.profit_loss_pct ?? 0) >= 0 ? '+' : ''}
     {(item.profit_loss_pct ?? 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
-  </td>
-
-  {/* Yeni kolon: Değişim % - İlk günden bugüne performans */}
-  <td className="px-4 py-3 text-right">
-    {item.symbol_id && changeData.has(item.symbol_id) ? (
-      <span className={`inline-flex items-center gap-1 font-semibold ${
-        getColorClass(changeData.get(item.symbol_id) ?? null)
-      }`}>
-        {(changeData.get(item.symbol_id) ?? 0) >= 0 ? (
-          <TrendingUp className="w-4 h-4" />
-        ) : (
-          <TrendingDown className="w-4 h-4" />
-        )}
-        {formatPercentage(changeData.get(item.symbol_id) ?? null)}
-      </span>
-    ) : (
-      <span className="text-gray-400 dark:text-gray-500">-</span>
-    )}
   </td>
 </tr>
                   );
