@@ -60,7 +60,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     {/* Desktop Sidebar - Hidden on mobile */}
     <aside
       className={`
-        ${collapsed ? "w-0 lg:w-16" : "w-0 lg:w-64"}
+        ${collapsed ? "w-0 lg:w-16" : "w-0 lg:w-44"}
         bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl
         border-r border-white/20 dark:border-slate-700/50
         shadow-2xl shadow-blue-500/5 dark:shadow-purple-500/10
