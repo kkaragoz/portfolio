@@ -6,6 +6,7 @@ import { X, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface GridData {  
   code: string | null;
+  name: string | null;
   symbol_id?: number | null;
   balance:number | null;
   average_cost:number | null;
@@ -53,7 +54,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<'USD' | 'TRY'>('USD');
   const [usdTry, setUsdTry] = useState<number | null>(null);
-  const [selectedSymbol, setSelectedSymbol] = useState<{ code: string; symbolId: number } | null>(null);
+  const [selectedSymbol, setSelectedSymbol] = useState<{ code: string; name: string; symbolId: number } | null>(null);
   const [performanceData, setPerformanceData] = useState<PerformanceData | null>(null);
   const [loadingPerformance, setLoadingPerformance] = useState(false);
 
@@ -108,7 +109,7 @@ export default function ReportsPage() {
 
   const handleRowClick = async (item: GridData) => {
     if (item.symbol_id) {
-      setSelectedSymbol({ code: item.code || '', symbolId: item.symbol_id });
+      setSelectedSymbol({ code: item.code || '', name: item.name || '', symbolId: item.symbol_id });
       await fetchPerformance(item.symbol_id);
     }
   };
@@ -248,6 +249,7 @@ const formatCurrency2Digits = (value: number) => {
                     key={item.code} 
                     className="hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
                     onClick={() => item.symbol_id && handleRowClick(item)}
+                    title={item.name || ''}
                   >
   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.code}</td>
   
@@ -404,9 +406,14 @@ const formatCurrency2Digits = (value: number) => {
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-700">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                {selectedSymbol.code} Performans
-              </h3>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  {selectedSymbol.code}
+                </h3>
+                {selectedSymbol.name && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{selectedSymbol.name}</p>
+                )}
+              </div>
               <button
                 onClick={() => setSelectedSymbol(null)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
