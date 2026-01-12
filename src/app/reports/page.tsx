@@ -157,6 +157,9 @@ export default function ReportsPage() {
     return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
   };
 
+const formatCurrency2Digits = (value: number) => {
+    return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };  
   const applyCurrency = (value: number | null) => {
     const v = value ?? 0;
     if (currency === 'TRY' && usdTry) {
@@ -249,18 +252,18 @@ export default function ReportsPage() {
   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.code}</td>
   
   {/* Bakiye için formatCurrency kullanımı tutarlılık sağlar */}
-  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(item.balance ?? 0)}</td>
+  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{item.balance}</td>
   
   <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(applyCurrency(item.average_cost))}</td>
   <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(applyCurrency(item.current_price))}</td>
-  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(applyCurrency(item.total_cost))}</td>
-  <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(applyCurrency(item.market_value))}</td>
+  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency2Digits(applyCurrency(item.total_cost))}</td>
+  <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">{formatCurrency2Digits(applyCurrency(item.market_value))}</td>
   
   {/* Kar/Zarar Tutarı - Boş olan hücre düzeltildi */}
   <td className={`px-4 py-3 text-right font-semibold ${
     (item.profit_loss ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
   }`}>
-    {formatCurrency(applyCurrency(item.profit_loss))}
+    {formatCurrency2Digits(applyCurrency(item.profit_loss))}
   </td>
 
   {/* Kar/Zarar Oranı (%) */}
