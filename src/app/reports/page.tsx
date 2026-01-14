@@ -26,6 +26,20 @@ interface PerformanceData {
   change_latest: number | null;
 }
 
+interface PerformanceGridItem {
+  code: string;
+  name: string;
+  symbolId: number;
+  latest: number | null;
+  day1: number | null;
+  day5: number | null;
+  month1: number | null;
+  month3: number | null;
+}
+
+type SortField = 'code' | 'latest' | 'day1' | 'day5' | 'month1' | 'month3';
+type SortDirection = 'asc' | 'desc';
+
 interface CategoryData {
   category: string;
   value: number;
@@ -57,6 +71,10 @@ export default function ReportsPage() {
   const [selectedSymbol, setSelectedSymbol] = useState<{ code: string; name: string; symbolId: number } | null>(null);
   const [performanceData, setPerformanceData] = useState<PerformanceData | null>(null);
   const [loadingPerformance, setLoadingPerformance] = useState(false);
+  const [performanceGrid, setPerformanceGrid] = useState<PerformanceGridItem[]>([]);
+  const [loadingPerformanceGrid, setLoadingPerformanceGrid] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('code');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   useEffect(() => {
     Promise.all([
@@ -107,12 +125,76 @@ export default function ReportsPage() {
     }
   };
 
+  // Tüm semboller için performans verilerini çek
+  useEffect(() => {
+    const fetchAllPerformance = async () => {
+      if (gridData.length === 0) return;
+      
+      setLoadingPerformanceGrid(true);
+      const promises = gridData
+        .filter(item => item.symbol_id)
+        .map(async (item) => {
+          try {
+            const res = await fetch(`/api/symbols/${item.symbol_id}/performance`);
+            const data: PerformanceData = await res.json();
+            return {
+              code: item.code || '',
+              name: item.name || '',
+              symbolId: item.symbol_id!,
+              latest: data.latest,
+              day1: data.day1,
+              day5: data.day5,
+              month1: data.month1,
+              month3: data.month3
+            };
+          } catch (e) {
+            console.error(`${item.code} için performans verisi alınamadı:`, e);
+            return null;
+          }
+        });
+
+      const results = await Promise.all(promises);
+      setPerformanceGrid(results.filter(item => item !== null) as PerformanceGridItem[]);
+      setLoadingPerformanceGrid(false);
+    };
+
+    fetchAllPerformance();
+  }, [gridData]);
+
   const handleRowClick = async (item: GridData) => {
     if (item.symbol_id) {
       setSelectedSymbol({ code: item.code || '', name: item.name || '', symbolId: item.symbol_id });
       await fetchPerformance(item.symbol_id);
     }
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  const sortedPerformanceGrid = [...performanceGrid].sort((a, b) => {
+    const aValue = a[sortField];
+    const bValue = b[sortField];
+    
+    if (aValue === null && bValue === null) return 0;
+    if (aValue === null) return 1;
+    if (bValue === null) return -1;
+    
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    
+    return sortDirection === 'asc' 
+      ? (aValue as number) - (bValue as number)
+      : (bValue as number) - (aValue as number);
+  });
 
   const formatPercentage = (value: number | null) => {
     if (value === null) return '-';
@@ -355,7 +437,120 @@ const formatCurrency2Digits = (value: number) => {
           </div>
         </div>
 
-        {/* 5. Portföy Değeri Grafiği */}
+        {/* 5. Performans Raporu */}
+        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Performans Raporu</h2>
+          {loadingPerformanceGrid ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Performans verileri yükleniyor...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-100 dark:bg-slate-700">
+                  <tr>
+                    <th 
+                      className="px-4 py-3 text-left text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      onClick={() => handleSort('code')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Kod
+                        {sortField === 'code' && (
+                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">Ad</th>
+                    <th 
+                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      onClick={() => handleSort('latest')}
+                    >
+                      <div className="flex items-center justify-end gap-2">
+                        Güncel Fiyat
+                        {sortField === 'latest' && (
+                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      onClick={() => handleSort('day1')}
+                    >
+                      <div className="flex items-center justify-end gap-2">
+                        1 Gün
+                        {sortField === 'day1' && (
+                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      onClick={() => handleSort('day5')}
+                    >
+                      <div className="flex items-center justify-end gap-2">
+                        5 Gün
+                        {sortField === 'day5' && (
+                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      onClick={() => handleSort('month1')}
+                    >
+                      <div className="flex items-center justify-end gap-2">
+                        1 Ay
+                        {sortField === 'month1' && (
+                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      onClick={() => handleSort('month3')}
+                    >
+                      <div className="flex items-center justify-end gap-2">
+                        3 Ay
+                        {sortField === 'month3' && (
+                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  {sortedPerformanceGrid.map((item) => (
+                    <tr 
+                      key={item.symbolId}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.code}</td>
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.name}</td>
+                      <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
+                        {item.latest !== null ? `$${item.latest.toFixed(2)}` : '-'}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-semibold ${getColorClass(item.day1)}`}>
+                        {formatPercentage(item.day1)}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-semibold ${getColorClass(item.day5)}`}>
+                        {formatPercentage(item.day5)}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-semibold ${getColorClass(item.month1)}`}>
+                        {formatPercentage(item.month1)}
+                      </td>
+                      <td className={`px-4 py-3 text-right font-semibold ${getColorClass(item.month3)}`}>
+                        {formatPercentage(item.month3)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* 6. Portföy Değeri Grafiği */}
         <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Portföy Değeri Grafiği</h2>
           <div className="h-[400px]">
