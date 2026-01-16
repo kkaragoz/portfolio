@@ -145,7 +145,6 @@ export default function SymbolsPage() {
       note: symbol.note || '',
     });
     setShowForm(true);
-    setSelectedSymbol(null);
   };
 
   const handleDelete = async (id: number) => {
@@ -179,33 +178,9 @@ export default function SymbolsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Sembol Tanımları
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
-            Toplam {symbols.length} sembol
-          </p>
-        </div>
-          <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setEditingId(null);
-              setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '' });
-            }}           
-            className="-translate-x-3 flex items-center gap-2 px-2 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg shadow-blue-500/30">            
-            <Plus size={20} />            
-            Yeni Sembol
-          </button>
-      </div>
-
-      {/* Search removed */}
-
-      {/* Form Modal */}
+      {/* Form Panel - Sticky at Top */}
       {showForm && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-slate-700">
+        <div className="sticky top-0 z-30 bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-slate-700">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               {editingId ? 'Sembolü Düzenle' : 'Yeni Sembol Ekle'}
@@ -329,6 +304,30 @@ export default function SymbolsPage() {
         </div>
       )}
 
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Sembol Tanımları
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            Toplam {symbols.length} sembol
+          </p>
+        </div>
+          <button
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditingId(null);
+              setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '' });
+            }}           
+            className="-translate-x-3 flex items-center gap-2 px-2 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg shadow-blue-500/30">            
+            <Plus size={20} />            
+            Yeni Sembol
+          </button>
+      </div>
+
+
+
       {/* Table */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
         <div className="overflow-x-auto">
@@ -361,7 +360,7 @@ export default function SymbolsPage() {
             <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
               {symbols.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <Tag className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>Henüz sembol eklenmemiş</p>
                   </td>
