@@ -131,7 +131,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {!collapsed && (
         <div className="p-4 border-t border-white/20 dark:border-slate-700/50">
           <div className="text-xs font-medium text-gray-400 dark:text-gray-500 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            v1.0.0
+            v1.1.1
           </div>
         </div>
       )}

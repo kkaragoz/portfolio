@@ -289,7 +289,7 @@ export async function POST() {
         newPrice = await fetchBISTPrice(row.code);
       } else if (row.market_category === 'K') {
         // Kripto para
-        if (row.code=='USDTTRY' || row.code==='USDTRY') 
+        if (row.code=='USDT') 
         {           
           newPrice = 1;
         }
