@@ -289,8 +289,15 @@ export async function POST() {
         newPrice = await fetchBISTPrice(row.code);
       } else if (row.market_category === 'K') {
         // Kripto para
-        console.log('  → BTCTURK API kullanılıyor...');
-        newPrice = await fetchCryptoPrice(row.code);
+        if (row.code=='USDTTRY' || row.code==='USDTRY') 
+        {           
+          newPrice = 1;
+        }
+        else 
+        {
+          console.log('  → BTCTURK API kullanılıyor...');
+          newPrice = await fetchCryptoPrice(row.code);
+        }
       } else if (row.market_category === 'F') {
         // Tefas fonu
         console.log('  → Tefas API kullanılıyor...');
