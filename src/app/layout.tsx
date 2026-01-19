@@ -63,8 +63,7 @@ export default function RootLayout({
           <div className="flex-1 flex flex-col overflow-hidden">
             <Header 
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
-              darkMode={darkMode}
-              onToggleDarkMode={toggleDarkMode}
+              
             />
             <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-6">
               {children}
