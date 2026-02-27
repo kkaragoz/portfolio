@@ -347,6 +347,7 @@ export async function POST() {
               if (row.code=='USDT'||row.code=='TETHER'||row.code=='USDC') 
               {           
                 newPrice = 1;
+                console.log('  → TETHER stablecoin olarak 1 USD kabul edildi');
               }
               else 
               {

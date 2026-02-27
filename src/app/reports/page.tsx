@@ -17,6 +17,17 @@ interface GridData {
   profit_loss_pct : number | null;
 }
 
+interface SymbolOption {
+  id: number;
+  name: string;
+  code: string | null;
+}
+
+interface PricePoint {
+  date: string;
+  price: number;
+}
+
 interface PerformanceData {
   latest: number | null;
   day1: number | null;
@@ -75,24 +86,59 @@ export default function ReportsPage() {
   const [loadingPerformanceGrid, setLoadingPerformanceGrid] = useState(false);
   const [sortField, setSortField] = useState<SortField>('code');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [symbolList, setSymbolList] = useState<SymbolOption[]>([]);
+  const [chartSymbolId, setChartSymbolId] = useState<number | null>(null);
+  const [priceChartData, setPriceChartData] = useState<PricePoint[]>([]);
+  const [loadingPriceChart, setLoadingPriceChart] = useState(false);
 
   useEffect(() => {
     Promise.all([
       fetch('/api/reports/grid').then(r => r.json()),
       fetch('/api/reports/category').then(r => r.json()),
       fetch('/api/reports/exchange').then(r => r.json()),
-      fetch('/api/reports/portfolio-history').then(r => r.json())
-    ]).then(([grid, category, exchange, history]) => {
+      fetch('/api/reports/portfolio-history').then(r => r.json()),
+      fetch('/api/symbols').then(r => r.json())
+    ]).then(([grid, category, exchange, history, symbols]) => {
       setGridData(Array.isArray(grid) ? grid : []);
       setCategoryData(Array.isArray(category) ? category : []);
       setExchangeData(Array.isArray(exchange) ? exchange : []);
       setPortfolioHistory(Array.isArray(history) ? history : []);
+      if (Array.isArray(symbols)) {
+        setSymbolList(symbols.map((s: any) => ({ id: s.id, name: s.name, code: s.code })).sort((a: SymbolOption, b: SymbolOption) => (a.code || '').localeCompare(b.code || '')));
+      }
       setLoading(false);
     }).catch(err => {
       console.error('Veri yüklenirken hata:', err);
       setLoading(false);
     });
   }, []);
+
+  // Seçilen sembolün fiyat verilerini çek
+  useEffect(() => {
+    if (!chartSymbolId) {
+      setPriceChartData([]);
+      return;
+    }
+    const fetchPriceChart = async () => {
+      setLoadingPriceChart(true);
+      try {
+        const res = await fetch(`/api/reports/price-chart?symbolId=${chartSymbolId}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setPriceChartData(data.map((d: any) => ({
+            date: new Date(d.date).toLocaleDateString('tr-TR'),
+            price: d.price
+          })));
+        }
+      } catch (e) {
+        console.error('Fiyat verileri alınamadı:', e);
+        setPriceChartData([]);
+      } finally {
+        setLoadingPriceChart(false);
+      }
+    };
+    fetchPriceChart();
+  }, [chartSymbolId]);
 
   // USD/TRY kurunu dashboard ile aynı kaynaktan çek
   useEffect(() => {
@@ -586,6 +632,71 @@ const formatCurrency2Digits = (value: number) => {
               </LineChart>
             </ResponsiveContainer>
           </div>
+        </div>
+        {/* 7. Fiyat Grafiği */}
+        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Fiyat Grafiği</h2>
+          <div className="mb-4">
+            <select
+              value={chartSymbolId ?? ''}
+              onChange={(e) => setChartSymbolId(e.target.value ? parseInt(e.target.value) : null)}
+              className="w-full max-w-sm px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            >
+              <option value="">Sembol seçiniz...</option>
+              {symbolList.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.code ? `${s.code} - ${s.name}` : s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {loadingPriceChart ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Fiyat verileri yükleniyor...</p>
+            </div>
+          ) : priceChartData.length > 0 ? (
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={priceChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    interval={Math.max(0, Math.floor(priceChartData.length / 15))}
+                  />
+                  <YAxis
+                    tick={{ fill: '#64748b' }}
+                    tickFormatter={(value) => value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip
+                    formatter={(value: any) => [Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }), 'Fiyat']}
+                    labelStyle={{ color: '#1e293b' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="price"
+                    stroke="#8884D8"
+                    strokeWidth={2}
+                    dot={priceChartData.length <= 60 ? { fill: '#8884D8', r: 3 } : false}
+                    activeDot={{ r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : chartSymbolId ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">Bu sembol için fiyat verisi bulunamadı.</p>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">Fiyat grafiğini görüntülemek için bir sembol seçiniz.</p>
+            </div>
+          )}
         </div>
       </div>
 
