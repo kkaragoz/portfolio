@@ -61,6 +61,11 @@ interface ExchangeData {
   value: number;
 }
 
+interface Kod3Data {
+  kod3: string;
+  value: number;
+}
+
 interface PortfolioHistory {
   id: number;
   date: string;
@@ -75,6 +80,7 @@ export default function ReportsPage() {
   const [gridData, setGridData] = useState<GridData[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [exchangeData, setExchangeData] = useState<ExchangeData[]>([]);
+  const [kod3Data, setKod3Data] = useState<Kod3Data[]>([]);
   const [portfolioHistory, setPortfolioHistory] = useState<PortfolioHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<'USD' | 'TRY'>('USD');
@@ -96,12 +102,14 @@ export default function ReportsPage() {
       fetch('/api/reports/grid').then(r => r.json()),
       fetch('/api/reports/category').then(r => r.json()),
       fetch('/api/reports/exchange').then(r => r.json()),
+      fetch('/api/reports/kod3').then(r => r.json()),
       fetch('/api/reports/portfolio-history').then(r => r.json()),
       fetch('/api/symbols').then(r => r.json())
-    ]).then(([grid, category, exchange, history, symbols]) => {
+    ]).then(([grid, category, exchange, kod3, history, symbols]) => {
       setGridData(Array.isArray(grid) ? grid : []);
       setCategoryData(Array.isArray(category) ? category : []);
       setExchangeData(Array.isArray(exchange) ? exchange : []);
+      setKod3Data(Array.isArray(kod3) ? kod3 : []);
       setPortfolioHistory(Array.isArray(history) ? history : []);
       if (Array.isArray(symbols)) {
         setSymbolList(symbols.map((s: any) => ({ id: s.id, name: s.name, code: s.code })).sort((a: SymbolOption, b: SymbolOption) => (a.code || '').localeCompare(b.code || '')));
@@ -282,6 +290,11 @@ export default function ReportsPage() {
     value: item.value
   }));
 
+  const kod3ChartData = kod3Data.map(item => ({
+    name: item.kod3,
+    value: item.value
+  }));
+
   const formatCurrency = (value: number) => {
     return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
   };
@@ -427,63 +440,108 @@ const formatCurrency2Digits = (value: number) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 3. Kategori Pie Chart */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Kategori Dağılımı</h2>
             <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.name} (${((entry.value / categoryChartData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1)}%)`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {categoryChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              {categoryChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry) => `${entry.name} (${((entry.value / categoryChartData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1)}%)`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {categoryChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                  Veri bulunmamaktadır
+                </div>
+              )}
             </div>
           </div>
 
-          {/* 4. Borsa Pie Chart */}
+          {/* 4. Birim Pie Chart */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Birim Dağılımı</h2>
             <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={exchangeChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.name} (${((entry.value / exchangeChartData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1)}%)`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {exchangeChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              {exchangeChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={exchangeChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry) => `${entry.name} (${((entry.value / exchangeChartData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1)}%)`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {exchangeChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                  Veri bulunmamaktadır
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 5. Kod3 Pie Chart */}
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Kod-3 Dağılımı</h2>
+            <div className="h-[350px]">
+              {kod3ChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={kod3ChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry) => `${entry.name} (${((entry.value / kod3ChartData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1)}%)`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {kod3ChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                  Veri bulunmamaktadır
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* 5. Performans Raporu */}
+        {/* 6. Performans Raporu */}
         <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Performans Raporu</h2>
           {loadingPerformanceGrid ? (

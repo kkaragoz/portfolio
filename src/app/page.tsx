@@ -125,13 +125,42 @@ export default function Home() {
         method: 'POST',
       });
       
-      const data = await response.json();
-      
-      if (response.ok) {
-        setPriceUpdateResult(data.message || 'Fiyatlar güncellendi');
-      } else {
-        setPriceUpdateResult(data.error || 'Hata oluştu');
+      if (!response.body) {
+        throw new Error('No response body');
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let lastMessage = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const jsonStr = line.slice(6);
+              const data = JSON.parse(jsonStr);
+              
+              if (data.type === 'complete') {
+                lastMessage = data.message || 'Fiyatlar güncellendi';
+              } else if (data.type === 'error') {
+                lastMessage = `Hata: ${data.message}`;
+              } else if (data.type === 'progress') {
+                lastMessage = `${data.processed}/${data.total} işleniyor...`;
+              }
+            } catch (e) {
+              console.error('Failed to parse SSE message:', e);
+            }
+          }
+        }
+      }
+
+      setPriceUpdateResult(lastMessage || 'Fiyatlar güncellendi');
     } catch (error) {
       console.error('Error updating prices:', error);
       setPriceUpdateResult('Fiyatlar güncellenirken hata oluştu');
