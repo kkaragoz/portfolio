@@ -1,15 +1,17 @@
 "use client";
 
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, Sun, Moon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Swal from 'sweetalert2';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
+  darkMode: boolean;
+  onToggleDarkMode: () => void;
 }
 
-export default function Header({ onToggleSidebar }: HeaderProps) {
+export default function Header({ onToggleSidebar, darkMode, onToggleDarkMode }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -20,7 +22,6 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
 
-  // Click outside to close suggestions
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (!formRef.current) return;
@@ -33,7 +34,6 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
     return () => document.removeEventListener('click', onDocClick);
   }, []);
 
-  // Fetch suggestions on input (debounced)
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSuggestions([]);
@@ -144,60 +144,86 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
   }, [activeIndex]);
 
   return (
-    <header className="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-white/20 dark:border-slate-700/50 shadow-sm px-6 flex items-center gap-4 relative z-20">
-      {/* Hamburger Menu Button - Mobile Only */}
+    <header
+      className="h-16 flex items-center gap-4 px-4 lg:px-6 relative z-20 flex-shrink-0"
+      style={{
+        background: 'var(--bg-header)',
+        borderBottom: '1px solid var(--border-color)',
+        boxShadow: 'var(--shadow-card)',
+      }}
+    >
+      {/* Mobile hamburger */}
       <button
         onClick={onToggleSidebar}
-        className="lg:hidden p-2 rounded-xl hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all"
+        className="lg:hidden p-2 rounded-md transition-colors"
+        style={{ color: 'var(--text-secondary)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
         aria-label="Menüyü aç"
       >
-        <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+        <Menu className="w-5 h-5" />
       </button>
-      
-      {/* Search Bar */}
-      <div className="flex-1 max-w-2xl">
-        <form 
-          ref={formRef} 
-          onSubmit={handleSearchSubmit} 
-          className="relative"
-        >
+
+      {/* Search */}
+      <div className="flex-1 max-w-xl">
+        <form ref={formRef} onSubmit={handleSearchSubmit} className="relative">
           <div className="relative">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+              style={{ color: 'var(--text-muted)' }}
+            />
             <input
               ref={inputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={onInputKeyDown}
-              placeholder="Sembol ara... (örn: AAPL, Tesla)"
-              className="w-full pl-5 pr-12 py-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-700 dark:to-slate-600 border-2 border-transparent focus:border-blue-400 dark:focus:border-blue-500 focus:shadow-lg focus:shadow-blue-200/50 dark:focus:shadow-blue-500/20 rounded-xl text-sm outline-none transition-all text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 font-medium"
+              placeholder="Sembol ara..."
+              className="w-full pl-10 pr-4 py-2 rounded-md text-sm outline-none transition-all"
+              style={{
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; }}
             />
           </div>
 
-          {/* Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-[60] left-0 right-0 mt-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 rounded-2xl shadow-2xl max-h-80 overflow-auto">
+            <div
+              className="absolute z-[60] left-0 right-0 mt-1 rounded-md max-h-72 overflow-auto"
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                boxShadow: 'var(--shadow-card-hover)',
+              }}
+            >
               {suggestions.map((s, idx) => (
                 <div
                   key={s.id}
                   data-index={idx}
-                  className={`px-5 py-3 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-200 ${
-                    activeIndex === idx ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-slate-700 dark:to-slate-600 scale-[0.98]' : ''
-                  } first:rounded-t-2xl last:rounded-b-2xl`}
+                  className="px-4 py-2.5 cursor-pointer transition-colors"
+                  style={{
+                    background: activeIndex === idx ? 'var(--bg-hover)' : 'transparent',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; setActiveIndex(idx); }}
+                  onMouseLeave={(e) => { if (activeIndex !== idx) e.currentTarget.style.background = 'transparent'; }}
                   onClick={() => selectSuggestion(s)}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                       {s.name}
-                    </div>
-                    <div className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-lg">
+                    </span>
+                    <span
+                      className="text-xs font-medium px-2 py-0.5 rounded"
+                      style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
+                    >
                       {s.code || s.code1 || s.code2 || s.code3 || '-'}
-                    </div>
+                    </span>
                   </div>
                   {s.note && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {s.note}
-                    </div>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{s.note}</p>
                   )}
                 </div>
               ))}
@@ -206,7 +232,20 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
         </form>
       </div>
 
-
+      {/* Right actions */}
+      <div className="flex items-center gap-1">
+        {/* Theme toggle */}
+        <button
+          onClick={onToggleDarkMode}
+          className="p-2 rounded-md transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          title={darkMode ? 'Açık temaya geç' : 'Koyu temaya geç'}
+        >
+          {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+      </div>
     </header>
   );
 }

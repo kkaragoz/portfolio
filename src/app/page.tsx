@@ -167,7 +167,6 @@ export default function Home() {
     } finally {
       setPriceUpdateLoading(false);
       
-      // 5 saniye sonra mesajı temizle
       setTimeout(() => {
         setPriceUpdateResult(null);
       }, 5000);
@@ -179,36 +178,32 @@ export default function Home() {
       title: "Toplam Sembol",
       value: stats.totalSymbols,
       icon: Tag,
-      color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50",
-      iconColor: "text-blue-600",
+      color: "#696cff",
+      softBg: "var(--accent-soft)",
       link: "/symbols"
     },
     {
       title: "Toplam İşlem",
       value: stats.totalTransactions,
       icon: ArrowLeftRight,
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
-      iconColor: "text-purple-600",
+      color: "#00bad1",
+      softBg: "var(--info-soft)",
       link: "/transactions"
     },
     {
       title: "Alış İşlemi",
       value: stats.totalBuyTransactions,
       icon: TrendingUp,
-      color: "from-green-500 to-green-600",
-      bgColor: "bg-green-50",
-      iconColor: "text-green-600",
+      color: "#28c76f",
+      softBg: "var(--success-soft)",
       link: "/transactions"
     },
     {
       title: "Satış İşlemi",
       value: stats.totalSellTransactions,
       icon: TrendingDown,
-      color: "from-red-500 to-red-600",
-      bgColor: "bg-red-50",
-      iconColor: "text-red-600",
+      color: "#ea5455",
+      softBg: "var(--danger-soft)",
       link: "/transactions"
     },
   ];
@@ -219,217 +214,220 @@ export default function Home() {
       description: "Yeni bir finansal sembol ekleyin",
       icon: Tag,
       href: "/symbols",
-      color: "from-blue-500 to-blue-600"
+      color: "#696cff",
+      softBg: "var(--accent-soft)",
     },
     {
       title: "İşlem Kaydet",
       description: "Alım veya satım işlemi ekleyin",
       icon: ArrowLeftRight,
       href: "/transactions",
-      color: "from-purple-500 to-purple-600"
+      color: "#00bad1",
+      softBg: "var(--info-soft)",
     },
     {
       title: "Rapor Görüntüle",
       description: "Detaylı analiz ve raporlar",
       icon: BarChart3,
       href: "/reports",
-      color: "from-green-500 to-green-600"
+      color: "#28c76f",
+      softBg: "var(--success-soft)",
     },
   ];
 
+  const profitLoss = portfolioSummary.portfolio_value - portfolioSummary.portfolio_cost;
+  const profitLossPct = portfolioSummary.portfolio_cost > 0
+    ? (profitLoss / portfolioSummary.portfolio_cost) * 100
+    : 0;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>
           Dashboard
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
           Portföy yönetim sisteminize hoş geldiniz
         </p>        
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <Link
-              key={index}
-              href={card.link}
-              className="group relative bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 dark:border-slate-700"
-            >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`${card.bgColor} dark:bg-slate-700 p-3 rounded-lg`}>
-                    <Icon className={`w-6 h-6 ${card.iconColor} dark:brightness-125`} />
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Detay →
-                  </div>
+            <Link key={index} href={card.link} className="card p-5 group">
+              <div className="flex items-center justify-between mb-3">
+                <div
+                  className="w-10 h-10 rounded-md flex items-center justify-center"
+                  style={{ background: card.softBg }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: card.color }} />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {card.title}
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                    {loading ? "..." : card.value}
-                  </p>
-                </div>
+                <span
+                  className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: 'var(--accent)' }}
+                >
+                  Detay →
+                </span>
               </div>
-              <div className={`h-1 bg-gradient-to-r ${card.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left`} />
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{card.title}</p>
+              <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-heading)' }}>
+                {loading ? "..." : card.value}
+              </p>
             </Link>
           );
         })}
       </div>
 
-      {/* Market Rates Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* USD/TRY Card */}
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl shadow-sm p-6 border border-emerald-200 dark:border-emerald-800">
+      {/* Market Rates */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-1">
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#28c76f' }}>
                 Döviz Kuru
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                USD/TRY
-              </h3>
+              <h3 className="text-lg font-bold mt-1" style={{ color: 'var(--text-heading)' }}>USD/TRY</h3>
             </div>
-            <div className="bg-emerald-100 dark:bg-emerald-800 p-3 rounded-lg">
-              <DollarSign className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+            <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: 'var(--success-soft)' }}>
+              <DollarSign className="w-5 h-5" style={{ color: '#28c76f' }} />
             </div>
           </div>
-          <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-              {marketRatesLoading ? (
-                <span className="animate-pulse">...</span>
-              ) : marketRates.usdTry ? (
-                `₺${marketRates.usdTry.toFixed(2)}`
-              ) : (
-                <span className="text-2xl text-gray-400 dark:text-gray-500">Veri yok</span>
-              )}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Anlık döviz kuru bilgisi
-            </p>
-          </div>
+          <p className="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>
+            {marketRatesLoading ? (
+              <span className="animate-pulse" style={{ color: 'var(--text-muted)' }}>...</span>
+            ) : marketRates.usdTry ? (
+              `₺${marketRates.usdTry.toFixed(2)}`
+            ) : (
+              <span className="text-lg" style={{ color: 'var(--text-muted)' }}>Veri yok</span>
+            )}
+          </p>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>Anlık döviz kuru bilgisi</p>
         </div>
 
-        {/* BTC/USD Card */}
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-sm p-6 border border-amber-200 dark:border-amber-800">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#ff9f43' }}>
                 Kripto Para
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                BTC/USD
-              </h3>
+              <h3 className="text-lg font-bold mt-1" style={{ color: 'var(--text-heading)' }}>BTC/USD</h3>
             </div>
-            <div className="bg-amber-100 dark:bg-amber-800 p-3 rounded-lg">
-              <TrendingUp className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+            <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: 'var(--warning-soft)' }}>
+              <TrendingUp className="w-5 h-5" style={{ color: '#ff9f43' }} />
             </div>
           </div>
-          <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-              {marketRatesLoading ? (
-                <span className="animate-pulse">...</span>
-              ) : marketRates.btcUsd ? (
-                `$${marketRates.btcUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-              ) : (
-                <span className="text-2xl text-gray-400 dark:text-gray-500">Veri yok</span>
-              )}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Bitcoin anlık fiyatı
-            </p>
-          </div>
+          <p className="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>
+            {marketRatesLoading ? (
+              <span className="animate-pulse" style={{ color: 'var(--text-muted)' }}>...</span>
+            ) : marketRates.btcUsd ? (
+              `$${marketRates.btcUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+            ) : (
+              <span className="text-lg" style={{ color: 'var(--text-muted)' }}>Veri yok</span>
+            )}
+          </p>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>Bitcoin anlık fiyatı</p>
         </div>
       </div>
 
-      {/* Portfolio Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Portfolio Cost Card */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl shadow-sm p-6 border border-blue-200 dark:border-blue-800">
+      {/* Portfolio Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
-                Portföy
-              </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Toplam Maliyet
-              </h3>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#696cff' }}>Portföy</p>
+              <h3 className="text-lg font-bold mt-1" style={{ color: 'var(--text-heading)' }}>Toplam Maliyet</h3>
             </div>
-            <div className="bg-blue-100 dark:bg-blue-800 p-3 rounded-lg">
-              <Package className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: 'var(--accent-soft)' }}>
+              <Package className="w-5 h-5" style={{ color: '#696cff' }} />
             </div>
           </div>
-          <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-              {portfolioLoading ? (
-                <span className="animate-pulse">...</span>
-              ) : (
-                `$${portfolioSummary.portfolio_cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-              )}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Portföy toplam alış maliyeti
-            </p>
-          </div>
+          <p className="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>
+            {portfolioLoading ? (
+              <span className="animate-pulse" style={{ color: 'var(--text-muted)' }}>...</span>
+            ) : (
+              `$${portfolioSummary.portfolio_cost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            )}
+          </p>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>Portföy toplam alış maliyeti</p>
         </div>
 
-        {/* Portfolio Value Card */}
-        <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-xl shadow-sm p-6 border border-violet-200 dark:border-violet-800">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-violet-600 dark:text-violet-400 mb-1">
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#00bad1' }}>Portföy</p>
+              <h3 className="text-lg font-bold mt-1" style={{ color: 'var(--text-heading)' }}>Piyasa Değeri</h3>
+            </div>
+            <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: 'var(--info-soft)' }}>
+              <Activity className="w-5 h-5" style={{ color: '#00bad1' }} />
+            </div>
+          </div>
+          <p className="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>
+            {portfolioLoading ? (
+              <span className="animate-pulse" style={{ color: 'var(--text-muted)' }}>...</span>
+            ) : (
+              `$${portfolioSummary.portfolio_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            )}
+          </p>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>Portföy güncel piyasa değeri</p>
+        </div>
+
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: profitLoss >= 0 ? '#28c76f' : '#ea5455' }}>
                 Portföy
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Piyasa Değeri
-              </h3>
+              <h3 className="text-lg font-bold mt-1" style={{ color: 'var(--text-heading)' }}>Kar / Zarar</h3>
             </div>
-            <div className="bg-violet-100 dark:bg-violet-800 p-3 rounded-lg">
-              <Activity className="w-8 h-8 text-violet-600 dark:text-violet-400" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-              {portfolioLoading ? (
-                <span className="animate-pulse">...</span>
+            <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: profitLoss >= 0 ? 'var(--success-soft)' : 'var(--danger-soft)' }}>
+              {profitLoss >= 0 ? (
+                <TrendingUp className="w-5 h-5" style={{ color: '#28c76f' }} />
               ) : (
-                `$${portfolioSummary.portfolio_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                <TrendingDown className="w-5 h-5" style={{ color: '#ea5455' }} />
               )}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Portföy güncel piyasa değeri
-            </p>
+            </div>
           </div>
+          <p className="text-3xl font-bold" style={{ color: profitLoss >= 0 ? '#28c76f' : '#ea5455' }}>
+            {portfolioLoading ? (
+              <span className="animate-pulse" style={{ color: 'var(--text-muted)' }}>...</span>
+            ) : (
+              `${profitLoss >= 0 ? '+' : ''}$${profitLoss.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            )}
+          </p>
+          {!portfolioLoading && (
+            <p className="text-xs font-semibold mt-2" style={{ color: profitLoss >= 0 ? '#28c76f' : '#ea5455' }}>
+              {profitLossPct >= 0 ? '+' : ''}{profitLossPct.toFixed(2)}%
+            </p>
+          )}
         </div>
       </div>
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-heading)' }}>
           Hızlı İşlemler
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
-              <Link
-                key={index}
-                href={action.href}
-                className="group bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-6 border border-gray-200 dark:border-slate-700"
-              >
-                <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${action.color} mb-4`}>
-                  <Icon className="w-6 h-6 text-white" />
+              <Link key={index} href={action.href} className="card p-5 group">
+                <div
+                  className="w-10 h-10 rounded-md flex items-center justify-center mb-3"
+                  style={{ background: action.softBg }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: action.color }} />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                <h3
+                  className="text-sm font-semibold mb-1 group-hover:underline"
+                  style={{ color: 'var(--text-heading)' }}
+                >
                   {action.title}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                   {action.description}
                 </p>
               </Link>
@@ -438,41 +436,42 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Price Update Card */}
-      <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl shadow-sm p-6 border border-orange-200 dark:border-orange-800">
+      {/* Price Update */}
+      <div className="card p-5">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <h2 className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>
               Fiyat Güncellemeleri
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
               Portföyünüzdeki varlıkların güncel fiyatlarını alın
             </p>
           </div>
-          <div className="bg-orange-100 dark:bg-orange-800 p-3 rounded-lg">
-            <DollarSign className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+          <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: 'var(--warning-soft)' }}>
+            <DollarSign className="w-5 h-5" style={{ color: '#ff9f43' }} />
           </div>
         </div>
         
         <button
           onClick={updatePrices}
           disabled={priceUpdateLoading}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: '#ff9f43' }}
+          onMouseEnter={(e) => { if (!priceUpdateLoading) e.currentTarget.style.opacity = '0.85'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
         >
-          <RefreshCw className={`w-5 h-5 ${priceUpdateLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${priceUpdateLoading ? 'animate-spin' : ''}`} />
           {priceUpdateLoading ? 'Güncelleniyor...' : 'Güncel Fiyatları Getir'}
         </button>
 
         {priceUpdateResult && (
-          <div className="mt-4 p-4 bg-white dark:bg-slate-800 rounded-lg border border-orange-200 dark:border-orange-700">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {priceUpdateResult}
-            </p>
+          <div className="mt-3 p-3 rounded-md text-sm" style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)' }}>
+            {priceUpdateResult}
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-700">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
             Kaynak: BIST (Borsa İstanbul), TEFAS, ve Kripto Para Borsaları
           </p>
         </div>

@@ -36,6 +36,8 @@ const turLabels: Record<Tur, string> = {
   COIN: 'Coin',
 };
 
+const inputClass = "w-full px-3 py-2 rounded-md text-sm outline-none transition-colors";
+
 export default function SymbolsPage() {
   const [symbols, setSymbols] = useState<Symbol[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,8 +68,6 @@ export default function SymbolsPage() {
     return () => window.removeEventListener('openSymbol', onOpenSymbol);
   }, []);
 
-  // No search/filtering: always show full list
-
   const fetchSymbols = async () => {
     try {
       const response = await fetch('/api/symbols');
@@ -92,12 +92,7 @@ export default function SymbolsPage() {
         });
         if (!response.ok) {
           const err = await response.json().catch(() => ({}));
-          Swal.fire({
-            icon: 'error',
-            title: 'Hata',
-            text: err?.error || 'Sembol güncellenemedi',
-            confirmButtonText: 'Tamam'
-          });
+          Swal.fire({ icon: 'error', title: 'Hata', text: err?.error || 'Sembol güncellenemedi', confirmButtonText: 'Tamam' });
           return;
         }
         await fetchSymbols();
@@ -110,12 +105,7 @@ export default function SymbolsPage() {
         });
         if (!response.ok) {
           const err = await response.json().catch(() => ({}));
-          Swal.fire({
-            icon: 'error',
-            title: 'Hata',
-            text: err?.error || 'Sembol eklenemedi',
-            confirmButtonText: 'Tamam'
-          });
+          Swal.fire({ icon: 'error', title: 'Hata', text: err?.error || 'Sembol eklenemedi', confirmButtonText: 'Tamam' });
           return;
         }
         await fetchSymbols();
@@ -125,12 +115,7 @@ export default function SymbolsPage() {
       setShowForm(false);
     } catch (error) {
       console.error('Error submitting form:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Hata',
-        text: 'Bir hata oluştu. Lütfen tekrar deneyin.',
-        confirmButtonText: 'Tamam'
-      });
+      Swal.fire({ icon: 'error', title: 'Hata', text: 'Bir hata oluştu. Lütfen tekrar deneyin.', confirmButtonText: 'Tamam' });
     }
   };
 
@@ -150,12 +135,8 @@ export default function SymbolsPage() {
   const handleDelete = async (id: number) => {
     if (confirm('Bu sembolü silmek istediğinizden emin misiniz?')) {
       try {
-        const response = await fetch(`/api/symbols/${id}`, {
-          method: 'DELETE',
-        });
-        if (response.ok) {
-          fetchSymbols();
-        }
+        const response = await fetch(`/api/symbols/${id}`, { method: 'DELETE' });
+        if (response.ok) fetchSymbols();
       } catch (error) {
         console.error('Error deleting symbol:', error);
       }
@@ -171,64 +152,49 @@ export default function SymbolsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-gray-500 dark:text-gray-400">Yüklen iyor...</div>
+        <div className="animate-pulse" style={{ color: 'var(--text-muted)' }}>Yükleniyor...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Form Panel - Sticky at Top */}
+    <div className="space-y-5 animate-fade-in">
+      {/* Form Panel */}
       {showForm && (
-        <div className="sticky top-0 z-30 bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-slate-700">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <div className="card sticky top-0 z-30 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>
               {editingId ? 'Sembolü Düzenle' : 'Yeni Sembol Ekle'}
             </h2>
-            <button
-              onClick={handleCancel}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            <button onClick={handleCancel} className="p-1.5 rounded-md transition-colors"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
             >
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
             </button>
           </div>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Kod
-              </label>
-              <input
-                type="text"
-                maxLength={10}
-                value={formData.code}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Kod</label>
+              <input type="text" maxLength={10} value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
-                placeholder="Örn: AAPL"
+                className={inputClass} placeholder="Örn: AAPL"
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Sembol Adı *
-              </label>
-              <input
-                type="text"
-                maxLength={255}
-                required
-                value={formData.name}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Sembol Adı *</label>
+              <input type="text" maxLength={255} required value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                className={inputClass}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Birim
-              </label>
-              <select
-                value={formData.code1}
-                onChange={(e) => setFormData({ ...formData, code1: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Birim</label>
+              <select value={formData.code1} onChange={(e) => setFormData({ ...formData, code1: e.target.value })}
+                className={inputClass}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               >
                 <option value="">Seçiniz</option>
                 <option value="TL">TL</option>
@@ -236,15 +202,11 @@ export default function SymbolsPage() {
                 <option value="Karma">Karma</option>
               </select>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tür
-              </label>
-              <select
-                value={formData.code2}
-                onChange={(e) => setFormData({ ...formData, code2: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Tür</label>
+              <select value={formData.code2} onChange={(e) => setFormData({ ...formData, code2: e.target.value })}
+                className={inputClass}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               >
                 <option value="">Seçiniz</option>
                 <option value="BIST">BIST</option>
@@ -257,45 +219,33 @@ export default function SymbolsPage() {
                 <option value="COIN">Coin</option>
               </select>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Kod 3
-              </label>
-              <input
-                type="text"
-                maxLength={5}
-                value={formData.code3}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Kod 3</label>
+              <input type="text" maxLength={5} value={formData.code3}
                 onChange={(e) => setFormData({ ...formData, code3: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
-                placeholder="1-2-3"
+                className={inputClass} placeholder="1-2-3"
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
-
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Not
-              </label>
-              <textarea
-                maxLength={255}
-                value={formData.note}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Not</label>
+              <textarea maxLength={255} value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-900 dark:text-gray-100"
-                rows={3}
+                className={`${inputClass} resize-none`} rows={2}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
-
-            <div className="md:col-span-2 flex gap-3">
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium"
+            <div className="md:col-span-2 flex gap-2">
+              <button type="submit" className="px-5 py-2 text-white text-sm font-medium rounded-md transition-opacity"
+                style={{ background: 'var(--success)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
               >
                 {editingId ? 'Güncelle' : 'Ekle'}
               </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-6 py-2.5 bg-gray-400 hover:bg-gray-500 text-white rounded-lg transition-colors font-medium"
+              <button type="button" onClick={handleCancel}
+                className="px-5 py-2 text-sm font-medium rounded-md transition-colors"
+                style={{ background: 'var(--bg-hover)', color: 'var(--text-secondary)' }}
               >
                 İptal
               </button>
@@ -305,63 +255,41 @@ export default function SymbolsPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Sembol Tanımları
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
-            Toplam {symbols.length} sembol
-          </p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>Sembol Tanımları</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Toplam {symbols.length} sembol</p>
         </div>
-          <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setEditingId(null);
-              setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '' });
-            }}           
-            className="-translate-x-3 flex items-center gap-2 px-2 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg shadow-blue-500/30">            
-            <Plus size={20} />            
-            Yeni Sembol
-          </button>
+        <button
+          onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '' }); }}
+          className="flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-md transition-opacity"
+          style={{ background: 'var(--accent)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+        >
+          <Plus size={18} />
+          Yeni Sembol
+        </button>
       </div>
 
-
-
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Kod
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Adı
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Birim
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Tür
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Kod 3
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Not
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  İşlemler
-                </th>
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ background: 'var(--bg-table-head)' }}>
+                {['Kod', 'Adı', 'Birim', 'Tür', 'Kod 3', 'Not', 'İşlemler'].map((h, i) => (
+                  <th key={h} className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider ${i === 6 ? 'text-right' : 'text-left'}`}
+                    style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
+                  >{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+            <tbody>
               {symbols.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                    <Tag className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <td colSpan={7} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                    <Tag className="w-10 h-10 mx-auto mb-2 opacity-40" />
                     <p>Henüz sembol eklenmemiş</p>
                   </td>
                 </tr>
@@ -369,42 +297,35 @@ export default function SymbolsPage() {
                 symbols.map((symbol) => (
                   <tr
                     key={symbol.id}
-                    className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    className="cursor-pointer transition-colors"
+                    style={{ borderBottom: '1px solid var(--border-light)' }}
                     onClick={() => setSelectedSymbol(symbol)}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                      {symbol.code || '-'}
-                    </td>
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">
-                      {symbol.name}
-                    </td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                      {symbol.code1 ? birimLabels[symbol.code1] : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                      {symbol.code2 ? turLabels[symbol.code2] : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                      {symbol.code3 || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300 max-w-xs truncate">
-                      {symbol.note || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleEdit(symbol); }}
-                          className="p-2 text-blue-500 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                          title="Düzenle"
+                    <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{symbol.code || '-'}</td>
+                    <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-heading)' }}>{symbol.name}</td>
+                    <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{symbol.code1 ? birimLabels[symbol.code1] : '-'}</td>
+                    <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{symbol.code2 ? turLabels[symbol.code2] : '-'}</td>
+                    <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{symbol.code3 || '-'}</td>
+                    <td className="px-4 py-3 max-w-xs truncate" style={{ color: 'var(--text-secondary)' }}>{symbol.note || '-'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(symbol); }}
+                          className="p-1.5 rounded-md transition-colors" title="Düzenle"
+                          style={{ color: 'var(--accent)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-soft)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={15} />
                         </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(symbol.id); }}
-                          className="p-2 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                          title="Sil"
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(symbol.id); }}
+                          className="p-1.5 rounded-md transition-colors" title="Sil"
+                          style={{ color: 'var(--danger)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--danger-soft)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -418,38 +339,38 @@ export default function SymbolsPage() {
 
       {/* Detail Panel */}
       {selectedSymbol && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-slate-700">
-          <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="card p-5">
+          <div className="flex items-start justify-between gap-4 mb-3">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <h3 className="text-xl font-bold" style={{ color: 'var(--text-heading)' }}>
                 {selectedSymbol.code ? `${selectedSymbol.code} – ${selectedSymbol.name}` : selectedSymbol.name}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                 Kodlar: {selectedSymbol.code || '-'} / {selectedSymbol.code1 ? birimLabels[selectedSymbol.code1] : '-'} / {selectedSymbol.code2 ? turLabels[selectedSymbol.code2] : '-'} / {selectedSymbol.code3 || '-'}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleEdit(selectedSymbol)}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-              >
-                Düzenle
-              </button>
-              <button
-                onClick={() => setSelectedSymbol(null)}
-                className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              <button onClick={() => handleEdit(selectedSymbol)}
+                className="px-3 py-1.5 text-white text-sm font-medium rounded-md"
+                style={{ background: 'var(--accent)' }}
+              >Düzenle</button>
+              <button onClick={() => setSelectedSymbol(null)}
+                className="p-1.5 rounded-md transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
           </div>
           {selectedSymbol.note && (
-            <div className="mb-4">
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Not:</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{selectedSymbol.note}</p>
+            <div className="mb-3">
+              <h4 className="text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Not:</h4>
+              <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{selectedSymbol.note}</p>
             </div>
           )}
-          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+          <div className="text-xs space-y-0.5" style={{ color: 'var(--text-muted)' }}>
             <div>Oluşturuldu: {selectedSymbol.createdAt ? new Date(selectedSymbol.createdAt).toLocaleString('tr-TR') : '-'}</div>
             <div>Güncellendi: {selectedSymbol.updatedAt ? new Date(selectedSymbol.updatedAt).toLocaleString('tr-TR') : '-'}</div>
           </div>

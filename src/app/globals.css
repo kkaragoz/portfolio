@@ -1,8 +1,67 @@
 @import "tailwindcss";
 
-/* Font tanımları */
+/* ─── Theme CSS Variables ─── */
 :root {
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Light theme */
+  --bg-body: #f5f5f9;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-header: #ffffff;
+  --bg-input: #f0f2f5;
+  --bg-table-head: #f8f9fa;
+  --bg-hover: #f3f4f6;
+  --border-color: #e5e7eb;
+  --border-light: #f0f0f0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-heading: #0f172a;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-card-hover: 0 10px 25px rgba(0,0,0,0.08);
+  --sidebar-active-bg: rgba(105, 108, 255, 0.08);
+  --sidebar-active-text: #696cff;
+  --accent: #696cff;
+  --accent-soft: rgba(105, 108, 255, 0.12);
+  --success: #28c76f;
+  --success-soft: rgba(40, 199, 111, 0.12);
+  --danger: #ea5455;
+  --danger-soft: rgba(234, 84, 85, 0.12);
+  --warning: #ff9f43;
+  --warning-soft: rgba(255, 159, 67, 0.12);
+  --info: #00bad1;
+  --info-soft: rgba(0, 186, 209, 0.12);
+}
+
+html.dark {
+  --bg-body: #232333;
+  --bg-sidebar: #2b2c40;
+  --bg-card: #2b2c40;
+  --bg-header: #2b2c40;
+  --bg-input: #2b2c40;
+  --bg-table-head: #343549;
+  --bg-hover: #343549;
+  --border-color: #434968;
+  --border-light: #3b3f5c;
+  --text-primary: #cfd3ec;
+  --text-secondary: #8e92b4;
+  --text-muted: #6e6e8a;
+  --text-heading: #e4e6f0;
+  --shadow-card: 0 2px 6px rgba(0,0,0,0.25);
+  --shadow-card-hover: 0 10px 30px rgba(0,0,0,0.35);
+  --sidebar-active-bg: rgba(105, 108, 255, 0.16);
+  --sidebar-active-text: #696cff;
+  --accent: #696cff;
+  --accent-soft: rgba(105, 108, 255, 0.2);
+  --success: #28c76f;
+  --success-soft: rgba(40, 199, 111, 0.2);
+  --danger: #ea5455;
+  --danger-soft: rgba(234, 84, 85, 0.2);
+  --warning: #ff9f43;
+  --warning-soft: rgba(255, 159, 67, 0.2);
+  --info: #00bad1;
+  --info-soft: rgba(0, 186, 209, 0.2);
 }
 
 * {
@@ -19,12 +78,14 @@ body {
   font-family: var(--font-inter), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-body);
+  color: var(--text-primary);
 }
 
-/* Responsive scrollbar */
+/* ─── Scrollbar ─── */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -32,53 +93,63 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 5px;
-  transition: background 0.2s;
+  background: #c5c5d2;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #a0a0b0;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #494b6a;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #5e608a;
 }
 
-/* Custom animations */
+/* ─── Animations ─── */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Focus styles */
+.animate-slide-in {
+  animation: slideIn 0.25s ease-out;
+}
+
+/* ─── Focus ─── */
 :focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* Selection */
+/* ─── Selection ─── */
 ::selection {
-  background-color: #3b82f6;
+  background-color: var(--accent);
   color: white;
 }
 
-html.dark ::selection {
-  background-color: #60a5fa;
-  color: #0f172a;
+/* ─── Card Utility ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
 }
 

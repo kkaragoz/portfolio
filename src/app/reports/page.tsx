@@ -256,17 +256,17 @@ export default function ReportsPage() {
     return `${sign}${value.toFixed(2)}%`;
   };
 
-  const getColorClass = (value: number | null) => {
-    if (value === null) return 'text-gray-500 dark:text-gray-400';
-    return value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+  const getColorStyle = (value: number | null): React.CSSProperties => {
+    if (value === null) return { color: 'var(--text-muted)' };
+    return { color: value >= 0 ? 'var(--success)' : 'var(--danger)' };
   };
 
   if (loading) {
     return (
-      <div className="p-6 md:p-8">
+      <div>
         <div className="max-w-[1400px] mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">Raporlar</h1>
-          <p className="text-slate-600 dark:text-slate-400">Yükleniyor...</p>
+          <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--text-heading)' }}>Raporlar</h1>
+          <p className="animate-pulse" style={{ color: 'var(--text-muted)' }}>Yükleniyor...</p>
         </div>
       </div>
     );
@@ -346,73 +346,67 @@ const formatCurrency2Digits = (value: number) => {
   };
 
   return (
-    <div className="p-6 md:p-8">
-      <div className="max-w-[1400px] mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">Raporlar</h1>
+    <div className="animate-fade-in">
+      <div className="max-w-[1400px] mx-auto space-y-6">
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>Raporlar</h1>
 
         {/* 1. Portföy Grid */}
-        <div className="mb-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Portföy Detayları</h2>
+            <h2 className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>Portföy Detayları</h2>
             <div className="flex items-center gap-3">              
-              <div className="inline-flex rounded-md border border-slate-200 dark:border-slate-600 overflow-hidden">
+              <div className="inline-flex rounded-md overflow-hidden" style={{ border: '1px solid var(--border-color)' }}>
                 <button
                   type="button"
                   onClick={() => setCurrency('USD')}
-                  className={`w-16 py-1 text-sm ${currency === 'USD' ? 'bg-slate-900 dark:bg-slate-600 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}
+                  className="w-16 py-1 text-xs font-medium rounded-l-md transition-colors"
+                  style={{ background: currency === 'USD' ? 'var(--accent)' : 'var(--bg-input)', color: currency === 'USD' ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
                 >USD</button>
                 <button
                   type="button"
                   onClick={() => setCurrency('TRY')}
-                  className={`w-16 py-1 text-sm ${currency === 'TRY' ? 'bg-slate-900 dark:bg-slate-600 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}
+                  className="w-16 py-1 text-xs font-medium rounded-r-md transition-colors"
+                  style={{ background: currency === 'TRY' ? 'var(--accent)' : 'var(--bg-input)', color: currency === 'TRY' ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
                 >TL</button>
               </div>              
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-100 dark:bg-slate-700">
-                <tr>
-                  <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">Kod</th>
-                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Bakiye</th>
-                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Ort. Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Güncel Fiyat {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Toplam Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Piyasa Değeri {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Kar/Zarar {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">Kar/Zarar %</th>
+              <thead>
+                <tr style={{ background: 'var(--bg-table-head)' }}>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Kod</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Bakiye</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Ort. Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Güncel Fiyat {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Toplam Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Piyasa Değeri {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Kar/Zarar {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Kar/Zarar %</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              <tbody>
                 {[...gridData].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => {                  
                   return (
                   <tr 
                     key={item.code} 
-                    className="hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+                    className="cursor-pointer transition-colors"
+                    style={{ borderBottom: '1px solid var(--border-light)' }}
                     onClick={() => item.symbol_id && handleRowClick(item)}
                     title={item.name || ''}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                   >
-  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.code}</td>
-  
-  {/* Bakiye için formatCurrency kullanımı tutarlılık sağlar */}
-  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{item.balance}</td>
-  
-  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(applyCurrency(item.average_cost))}</td>
-  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency(applyCurrency(item.current_price))}</td>
-  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{formatCurrency2Digits(applyCurrency(item.total_cost))}</td>
-  <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">{formatCurrency2Digits(applyCurrency(item.market_value))}</td>
-  
-  {/* Kar/Zarar Tutarı - Boş olan hücre düzeltildi */}
-  <td className={`px-4 py-3 text-right font-semibold ${
-    (item.profit_loss ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-  }`}>
+  <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-heading)' }}>{item.code}</td>
+  <td className="px-4 py-3 text-right" style={{ color: 'var(--text-secondary)' }}>{item.balance}</td>
+  <td className="px-4 py-3 text-right" style={{ color: 'var(--text-secondary)' }}>{formatCurrency(applyCurrency(item.average_cost))}</td>
+  <td className="px-4 py-3 text-right" style={{ color: 'var(--text-secondary)' }}>{formatCurrency(applyCurrency(item.current_price))}</td>
+  <td className="px-4 py-3 text-right" style={{ color: 'var(--text-secondary)' }}>{formatCurrency2Digits(applyCurrency(item.total_cost))}</td>
+  <td className="px-4 py-3 text-right font-semibold" style={{ color: 'var(--text-heading)' }}>{formatCurrency2Digits(applyCurrency(item.market_value))}</td>
+  <td className="px-4 py-3 text-right font-semibold" style={{ color: (item.profit_loss ?? 0) >= 0 ? 'var(--success)' : 'var(--danger)' }}>
     {formatCurrency2Digits(applyCurrency(item.profit_loss))}
   </td>
-
-  {/* Kar/Zarar Oranı (%) */}
-  <td className={`px-4 py-3 text-right font-semibold ${
-    (item.profit_loss_pct ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-  }`}>
+  <td className="px-4 py-3 text-right font-semibold" style={{ color: (item.profit_loss_pct ?? 0) >= 0 ? 'var(--success)' : 'var(--danger)' }}>
     {(item.profit_loss_pct ?? 0) >= 0 ? '+' : ''}
     {(item.profit_loss_pct ?? 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
   </td>
@@ -425,8 +419,8 @@ const formatCurrency2Digits = (value: number) => {
         </div>
 
         {/* 2. Treemap - Kod ve Piyasa Değeri */}
-        <div className="mb-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Portföy Dağılımı</h2>
+        <div className="card p-5">
+          <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Portföy Dağılımı</h2>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <Treemap
@@ -440,10 +434,10 @@ const formatCurrency2Digits = (value: number) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 3. Kategori Pie Chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Kategori Dağılımı</h2>
+          <div className="card p-5">
+            <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Kategori Dağılımı</h2>
             <div className="h-[350px]">
               {categoryChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -467,7 +461,7 @@ const formatCurrency2Digits = (value: number) => {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
                   Veri bulunmamaktadır
                 </div>
               )}
@@ -475,8 +469,8 @@ const formatCurrency2Digits = (value: number) => {
           </div>
 
           {/* 4. Birim Pie Chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Birim Dağılımı</h2>
+          <div className="card p-5">
+            <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Birim Dağılımı</h2>
             <div className="h-[350px]">
               {exchangeChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -500,7 +494,7 @@ const formatCurrency2Digits = (value: number) => {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
                   Veri bulunmamaktadır
                 </div>
               )}
@@ -508,8 +502,8 @@ const formatCurrency2Digits = (value: number) => {
           </div>
 
           {/* 5. Kod3 Pie Chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Kod-3 Dağılımı</h2>
+          <div className="card p-5">
+            <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Kod-3 Dağılımı</h2>
             <div className="h-[350px]">
               {kod3ChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -533,7 +527,7 @@ const formatCurrency2Digits = (value: number) => {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
                   Veri bulunmamaktadır
                 </div>
               )}
@@ -542,108 +536,105 @@ const formatCurrency2Digits = (value: number) => {
         </div>
 
         {/* 6. Performans Raporu */}
-        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Performans Raporu</h2>
+        <div className="card p-5">
+          <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Performans Raporu</h2>
           {loadingPerformanceGrid ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Performans verileri yükleniyor...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--accent)' }}></div>
+              <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>Performans verileri yükleniyor...</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-slate-100 dark:bg-slate-700">
-                  <tr>
+                <thead>
+                  <tr style={{ background: 'var(--bg-table-head)' }}>
                     <th 
-                      className="px-4 py-3 text-left text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
+                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
                       onClick={() => handleSort('code')}
                     >
                       <div className="flex items-center gap-2">
                         Kod
-                        {sortField === 'code' && (
-                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                        )}
+                        {sortField === 'code' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">Ad</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Ad</th>
                     <th 
-                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
+                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
                       onClick={() => handleSort('latest')}
                     >
                       <div className="flex items-center justify-end gap-2">
                         Güncel Fiyat
-                        {sortField === 'latest' && (
-                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                        )}
+                        {sortField === 'latest' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
                       </div>
                     </th>
                     <th 
-                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
+                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
                       onClick={() => handleSort('day1')}
                     >
                       <div className="flex items-center justify-end gap-2">
                         1 Gün
-                        {sortField === 'day1' && (
-                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                        )}
+                        {sortField === 'day1' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
                       </div>
                     </th>
                     <th 
-                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
+                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
                       onClick={() => handleSort('day5')}
                     >
                       <div className="flex items-center justify-end gap-2">
                         5 Gün
-                        {sortField === 'day5' && (
-                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                        )}
+                        {sortField === 'day5' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
                       </div>
                     </th>
                     <th 
-                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
+                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
                       onClick={() => handleSort('month1')}
                     >
                       <div className="flex items-center justify-end gap-2">
                         1 Ay
-                        {sortField === 'month1' && (
-                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                        )}
+                        {sortField === 'month1' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
                       </div>
                     </th>
                     <th 
-                      className="px-4 py-3 text-right text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
+                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
                       onClick={() => handleSort('month3')}
                     >
                       <div className="flex items-center justify-end gap-2">
                         3 Ay
-                        {sortField === 'month3' && (
-                          <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                        )}
+                        {sortField === 'month3' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
                       </div>
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody>
                   {sortedPerformanceGrid.map((item) => (
                     <tr 
                       key={item.symbolId}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                      className="transition-colors"
+                      style={{ borderBottom: '1px solid var(--border-light)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{item.code}</td>
-                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.name}</td>
-                      <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-heading)' }}>{item.code}</td>
+                      <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{item.name}</td>
+                      <td className="px-4 py-3 text-right" style={{ color: 'var(--text-secondary)' }}>
                         {item.latest !== null ? `$${item.latest.toFixed(2)}` : '-'}
                       </td>
-                      <td className={`px-4 py-3 text-right font-semibold ${getColorClass(item.day1)}`}>
+                      <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(item.day1)}>
                         {formatPercentage(item.day1)}
                       </td>
-                      <td className={`px-4 py-3 text-right font-semibold ${getColorClass(item.day5)}`}>
+                      <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(item.day5)}>
                         {formatPercentage(item.day5)}
                       </td>
-                      <td className={`px-4 py-3 text-right font-semibold ${getColorClass(item.month1)}`}>
+                      <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(item.month1)}>
                         {formatPercentage(item.month1)}
                       </td>
-                      <td className={`px-4 py-3 text-right font-semibold ${getColorClass(item.month3)}`}>
+                      <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(item.month3)}>
                         {formatPercentage(item.month3)}
                       </td>
                     </tr>
@@ -655,8 +646,8 @@ const formatCurrency2Digits = (value: number) => {
         </div>
 
         {/* 6. Portföy Değeri Grafiği */}
-        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Portföy Değeri Grafiği</h2>
+        <div className="card p-5">
+          <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Portföy Değeri Grafiği</h2>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={portfolioHistory.map(item => ({
@@ -692,13 +683,14 @@ const formatCurrency2Digits = (value: number) => {
           </div>
         </div>
         {/* 7. Fiyat Grafiği */}
-        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Fiyat Grafiği</h2>
+        <div className="card p-5">
+          <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Fiyat Grafiği</h2>
           <div className="mb-4">
             <select
               value={chartSymbolId ?? ''}
               onChange={(e) => setChartSymbolId(e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full max-w-sm px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              className="w-full max-w-sm px-3 py-2 rounded-md text-sm outline-none transition-colors"
+              style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
             >
               <option value="">Sembol seçiniz...</option>
               {symbolList.map((s) => (
@@ -710,8 +702,8 @@ const formatCurrency2Digits = (value: number) => {
           </div>
           {loadingPriceChart ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Fiyat verileri yükleniyor...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--accent)' }}></div>
+              <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>Fiyat verileri yükleniyor...</p>
             </div>
           ) : priceChartData.length > 0 ? (
             <div className="h-[400px]">
@@ -748,11 +740,11 @@ const formatCurrency2Digits = (value: number) => {
             </div>
           ) : chartSymbolId ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">Bu sembol için fiyat verisi bulunamadı.</p>
+              <p style={{ color: 'var(--text-muted)' }}>Bu sembol için fiyat verisi bulunamadı.</p>
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">Fiyat grafiğini görüntülemek için bir sembol seçiniz.</p>
+              <p style={{ color: 'var(--text-muted)' }}>Fiyat grafiğini görüntülemek için bir sembol seçiniz.</p>
             </div>
           )}
         </div>
@@ -761,105 +753,107 @@ const formatCurrency2Digits = (value: number) => {
       {/* Performance Popup */}
       {selectedSymbol && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedSymbol(null)}
         >
           <div 
-            className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-slate-700"
+            className="card max-w-md w-full"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-700">
+            <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--border-color)' }}>
               <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                <h3 className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>
                   {selectedSymbol.code}
                 </h3>
                 {selectedSymbol.name && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{selectedSymbol.name}</p>
+                  <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{selectedSymbol.name}</p>
                 )}
               </div>
               <button
                 onClick={() => setSelectedSymbol(null)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-1.5 rounded-md transition-colors"
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               >
-                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="p-5">
               {loadingPerformance ? (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Yükleniyor...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--accent)' }}></div>
+                  <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>Yükleniyor...</p>
                 </div>
               ) : performanceData ? (
                 <div className="space-y-4">
                   {/* Son Gün */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-input)' }}>
                     <div className="flex items-center gap-2">
                       {performanceData.day1 !== null && performanceData.day1 >= 0 ? (
-                        <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <TrendingUp className="w-5 h-5" style={{ color: 'var(--success)' }} />
                       ) : (
-                        <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        <TrendingDown className="w-5 h-5" style={{ color: 'var(--danger)' }} />
                       )}
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Son Gün</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Son Gün</span>
                     </div>
-                    <span className={`text-lg font-bold ${getColorClass(performanceData.day1)}`}>
+                    <span className="text-lg font-bold" style={getColorStyle(performanceData.day1)}>
                       {formatPercentage(performanceData.day1)}
                     </span>
                   </div>
 
                   {/* Son 5 Gün */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-input)' }}>
                     <div className="flex items-center gap-2">
                       {performanceData.day5 !== null && performanceData.day5 >= 0 ? (
-                        <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <TrendingUp className="w-5 h-5" style={{ color: 'var(--success)' }} />
                       ) : (
-                        <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        <TrendingDown className="w-5 h-5" style={{ color: 'var(--danger)' }} />
                       )}
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Son 5 Gün</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Son 5 Gün</span>
                     </div>
-                    <span className={`text-lg font-bold ${getColorClass(performanceData.day5)}`}>
+                    <span className="text-lg font-bold" style={getColorStyle(performanceData.day5)}>
                       {formatPercentage(performanceData.day5)}
                     </span>
                   </div>
 
                   {/* Son 1 Ay */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-input)' }}>
                     <div className="flex items-center gap-2">
                       {performanceData.month1 !== null && performanceData.month1 >= 0 ? (
-                        <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <TrendingUp className="w-5 h-5" style={{ color: 'var(--success)' }} />
                       ) : (
-                        <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        <TrendingDown className="w-5 h-5" style={{ color: 'var(--danger)' }} />
                       )}
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Son 1 Ay</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Son 1 Ay</span>
                     </div>
-                    <span className={`text-lg font-bold ${getColorClass(performanceData.month1)}`}>
+                    <span className="text-lg font-bold" style={getColorStyle(performanceData.month1)}>
                       {formatPercentage(performanceData.month1)}
                     </span>
                   </div>
 
                   {/* Son 3 Ay */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-input)' }}>
                     <div className="flex items-center gap-2">
                       {performanceData.month3 !== null && performanceData.month3 >= 0 ? (
-                        <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <TrendingUp className="w-5 h-5" style={{ color: 'var(--success)' }} />
                       ) : (
-                        <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        <TrendingDown className="w-5 h-5" style={{ color: 'var(--danger)' }} />
                       )}
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Son 3 Ay</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Son 3 Ay</span>
                     </div>
-                    <span className={`text-lg font-bold ${getColorClass(performanceData.month3)}`}>
+                    <span className="text-lg font-bold" style={getColorStyle(performanceData.month3)}>
                       {formatPercentage(performanceData.month3)}
                     </span>
                   </div>
 
                   {/* Güncel Fiyat */}
-                  <div className="mt-6 pt-4 border-t border-gray-200 dark:border-slate-700">
+                  <div className="mt-6 pt-4" style={{ borderTop: '1px solid var(--border-color)' }}>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Güncel Fiyat</span>
-                      <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Güncel Fiyat</span>
+                      <span className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>
                         {performanceData.latest !== null ? `$${performanceData.latest.toFixed(2)}` : '-'}
                       </span>
                     </div>
@@ -867,7 +861,7 @@ const formatCurrency2Digits = (value: number) => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400">Performans verisi bulunamadı</p>
+                  <p style={{ color: 'var(--text-muted)' }}>Performans verisi bulunamadı</p>
                 </div>
               )}
             </div>

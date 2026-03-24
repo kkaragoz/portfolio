@@ -21,21 +21,17 @@ export default function RootLayout({
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    // LocalStorage'dan kullanıcı tercihini oku
     const savedTheme = localStorage.getItem('darkMode');
-    
+
     if (savedTheme !== null) {
-      // Kullanıcı daha önce bir tercih yapmış
       setDarkMode(savedTheme === 'true');
     } else {
-      // İlk kez, sistem saatine göre ayarla (18:00 - 06:00 arası)
       const hour = new Date().getHours();
       const shouldBeDark = hour >= 18 || hour < 6;
       setDarkMode(shouldBeDark);
       localStorage.setItem('darkMode', shouldBeDark.toString());
     }
 
-    // Her dakika saat kontrolü yap (sadece kullanıcı tercih yapmamışsa)
     const interval = setInterval(() => {
       const savedTheme = localStorage.getItem('darkMode');
       if (savedTheme === null) {
@@ -48,7 +44,6 @@ export default function RootLayout({
     return () => clearInterval(interval);
   }, []);
 
-  // Dark mode toggle fonksiyonu
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
@@ -58,14 +53,15 @@ export default function RootLayout({
   return (
     <html lang="tr" className={darkMode ? 'dark' : ''}>
       <body className={`${inter.variable} antialiased`}>
-        <div className="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-gray-900 gap-1">
+        <div className="flex h-screen" style={{ background: 'var(--bg-body)' }}>
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden min-w-0">
             <Header 
-              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
-              
+              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+              darkMode={darkMode}
+              onToggleDarkMode={toggleDarkMode}
             />
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-6">
+            <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
               {children}
             </main>
           </div>

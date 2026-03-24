@@ -23,6 +23,8 @@ interface Transaction {
   note: string | null;
 }
 
+const inputClass = "w-full px-3 py-2 rounded-md text-sm outline-none transition-colors";
+
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
@@ -41,9 +43,7 @@ export default function TransactionsPage() {
     note: '',
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   useEffect(() => {
     if (filterType === 'all') {
@@ -73,7 +73,6 @@ export default function TransactionsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
       if (editingId !== null) {
         const response = await fetch(`/api/transactions/${editingId}`, {
@@ -89,12 +88,7 @@ export default function TransactionsPage() {
         });
         if (!response.ok) {
           const err = await response.json().catch(() => ({}));
-          Swal.fire({
-            icon: 'error',
-            title: 'Hata',
-            text: err?.error || 'İşlem güncellenemedi',
-            confirmButtonText: 'Tamam'
-          });
+          Swal.fire({ icon: 'error', title: 'Hata', text: err?.error || 'İşlem güncellenemedi', confirmButtonText: 'Tamam' });
           return;
         }
         await fetchData();
@@ -113,35 +107,16 @@ export default function TransactionsPage() {
         });
         if (!response.ok) {
           const err = await response.json().catch(() => ({}));
-          Swal.fire({
-            icon: 'error',
-            title: 'Hata',
-            text: err?.error || 'İşlem eklenemedi',
-            confirmButtonText: 'Tamam'
-          });
+          Swal.fire({ icon: 'error', title: 'Hata', text: err?.error || 'İşlem eklenemedi', confirmButtonText: 'Tamam' });
           return;
         }
         await fetchData();
       }
-
-      setFormData({
-        symbolId: '',
-        date: new Date().toISOString().split('T')[0],
-        type: 'B',
-        price: '',
-        quantity: '',
-        balance: '',
-        note: '',
-      });
+      setFormData({ symbolId: '', date: new Date().toISOString().split('T')[0], type: 'B', price: '', quantity: '', balance: '', note: '' });
       setShowForm(false);
     } catch (error) {
       console.error('Error submitting form:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Hata',
-        text: 'Bir hata oluştu. Lütfen tekrar deneyin.',
-        confirmButtonText: 'Tamam'
-      });
+      Swal.fire({ icon: 'error', title: 'Hata', text: 'Bir hata oluştu. Lütfen tekrar deneyin.', confirmButtonText: 'Tamam' });
     }
   };
 
@@ -161,30 +136,17 @@ export default function TransactionsPage() {
 
   const handleDelete = async (id: number) => {
     const result = await Swal.fire({
-      icon: 'warning',
-      title: 'Emin misiniz?',
+      icon: 'warning', title: 'Emin misiniz?',
       text: 'Bu işlemi silmek istediğinizden emin misiniz?',
-      showCancelButton: true,
-      confirmButtonText: 'Evet, Sil',
-      cancelButtonText: 'İptal',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#6b7280'
+      showCancelButton: true, confirmButtonText: 'Evet, Sil', cancelButtonText: 'İptal',
+      confirmButtonColor: '#ea5455', cancelButtonColor: '#6b7280'
     });
-
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`/api/transactions/${id}`, {
-          method: 'DELETE',
-        });
+        const response = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
         if (response.ok) {
           fetchData();
-          Swal.fire({
-            icon: 'success',
-            title: 'Silindi',
-            text: 'İşlem başarıyla silindi.',
-            timer: 1500,
-            showConfirmButton: false
-          });
+          Swal.fire({ icon: 'success', title: 'Silindi', text: 'İşlem başarıyla silindi.', timer: 1500, showConfirmButton: false });
         }
       } catch (error) {
         console.error('Error deleting transaction:', error);
@@ -195,21 +157,13 @@ export default function TransactionsPage() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({
-      symbolId: '',
-      date: new Date().toISOString().split('T')[0],
-      type: 'B',
-      price: '',
-      quantity: '',
-      balance: '',
-      note: '',
-    });
+    setFormData({ symbolId: '', date: new Date().toISOString().split('T')[0], type: 'B', price: '', quantity: '', balance: '', note: '' });
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-gray-500 dark:text-gray-400">Yükleniyor...</div>
+        <div className="animate-pulse" style={{ color: 'var(--text-muted)' }}>Yükleniyor...</div>
       </div>
     );
   }
@@ -221,18 +175,16 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            İşlem Kayıtları
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>İşlem Kayıtları</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
             Toplam {stats.total} işlem ({stats.buy} alış, {stats.sell} satış)
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <button
             onClick={async () => {
               try {
@@ -246,302 +198,218 @@ export default function TransactionsPage() {
                 await Swal.fire({ icon: 'error', title: 'FIFO hatası', text: (err as Error).message || 'İşlem başarısız' });
               }
             }}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white rounded-lg transition-all shadow-lg shadow-green-500/30"
+            className="flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-md transition-opacity"
+            style={{ background: 'var(--success)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
           >
-            <SquareSigma size={20} />
+            <SquareSigma size={18} />
             FIFO
           </button>
           <button
             onClick={() => {
-              setShowForm(!showForm);
-              setEditingId(null);
-              setFormData({
-                symbolId: '',
-                date: new Date().toISOString().split('T')[0],
-                type: 'B',
-                price: '',
-                quantity: '',
-                balance: '',
-                note: '',
-              });
+              setShowForm(!showForm); setEditingId(null);
+              setFormData({ symbolId: '', date: new Date().toISOString().split('T')[0], type: 'B', price: '', quantity: '', balance: '', note: '' });
             }}
-             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg shadow-blue-500/30"
+            className="flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-md transition-opacity"
+            style={{ background: 'var(--accent)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
           >
-            <Plus size={20} />
+            <Plus size={18} />
             Yeni İşlem
           </button>
         </div>
       </div>
 
-      {/* Filter Buttons */}
+      {/* Filters */}
       <div className="flex items-center gap-2">
-        <Filter className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-        <button
-          onClick={() => setFilterType('all')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            filterType === 'all'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600'
-          }`}
-        >
-          Tümü ({stats.total})
-        </button>
-        <button
-          onClick={() => setFilterType('B')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-            filterType === 'B'
-              ? 'bg-green-500 text-white'
-              : 'bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600'
-          }`}
-        >
-          <TrendingUp className="w-4 h-4" />
-          Alış ({stats.buy})
-        </button>
-        <button
-          onClick={() => setFilterType('S')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-            filterType === 'S'
-              ? 'bg-red-500 text-white'
-              : 'bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600'
-          }`}
-        >
-          <TrendingDown className="w-4 h-4" />
-          Satış ({stats.sell})
-        </button>
+        <Filter className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+        {[
+          { key: 'all', label: `Tümü (${stats.total})`, color: 'var(--accent)', soft: 'var(--accent-soft)' },
+          { key: 'B', label: `Alış (${stats.buy})`, color: 'var(--success)', soft: 'var(--success-soft)', icon: TrendingUp },
+          { key: 'S', label: `Satış (${stats.sell})`, color: 'var(--danger)', soft: 'var(--danger-soft)', icon: TrendingDown },
+        ].map((f) => {
+          const active = filterType === f.key;
+          const Icon = 'icon' in f ? f.icon : null;
+          return (
+            <button
+              key={f.key}
+              onClick={() => setFilterType(f.key)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+              style={{
+                background: active ? f.color : f.soft,
+                color: active ? '#fff' : f.color,
+              }}
+            >
+              {Icon && <Icon className="w-3.5 h-3.5" />}
+              {f.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Form Modal */}
+      {/* Form */}
       {showForm && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-slate-700">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>
               {editingId ? 'İşlemi Düzenle' : 'Yeni İşlem Ekle'}
             </h2>
-            <button
-              onClick={handleCancel}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            <button onClick={handleCancel} className="p-1.5 rounded-md transition-colors"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
             >
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
             </button>
           </div>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Sembol *
-              </label>
-              <select
-                required
-                value={formData.symbolId}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Sembol *</label>
+              <select required value={formData.symbolId}
                 onChange={(e) => setFormData({ ...formData, symbolId: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                className={inputClass}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               >
                 <option value="">Sembol seçin</option>
-                {symbols.map((symbol) => (
-                  <option key={symbol.id} value={symbol.id}>
-                    {symbol.code || symbol.name}
-                  </option>
-                ))}
+                {symbols.map((s) => (<option key={s.id} value={s.id}>{s.code || s.name}</option>))}
               </select>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tarih *
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.date}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Tarih *</label>
+              <input type="date" required value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                className={inputClass}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                İşlem Türü *
-              </label>
-              <select
-                required
-                value={formData.type}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>İşlem Türü *</label>
+              <select required value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                className={inputClass}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               >
                 <option value="B">Alım (B)</option>
                 <option value="S">Satım (S)</option>
               </select>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Fiyat *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                value={formData.price}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Fiyat *</label>
+              <input type="number" step="0.01" required value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                className={inputClass}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Miktar *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                value={formData.quantity}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Miktar *</label>
+              <input type="number" step="0.01" required value={formData.quantity}
                 onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                className={inputClass}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
-
             {formData.type === 'B' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Bakiye (Alım için)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.balance}
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Bakiye</label>
+                <input type="number" step="0.01" value={formData.balance}
                   onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                  className={inputClass}
+                  style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                 />
               </div>
             )}
-
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Not
-              </label>
-              <textarea
-                maxLength={255}
-                value={formData.note}
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Not</label>
+              <textarea maxLength={255} value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-900 dark:text-gray-100"
-                rows={3}
+                className={`${inputClass} resize-none`} rows={2}
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
-
-            <div className="md:col-span-2 flex gap-3">
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium"
-              >
-                {editingId ? 'Güncelle' : 'Ekle'}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-6 py-2.5 bg-gray-400 hover:bg-gray-500 text-white rounded-lg transition-colors font-medium"
-              >
-                İptal
-              </button>
+            <div className="md:col-span-2 flex gap-2">
+              <button type="submit" className="px-5 py-2 text-white text-sm font-medium rounded-md transition-opacity"
+                style={{ background: 'var(--success)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+              >{editingId ? 'Güncelle' : 'Ekle'}</button>
+              <button type="button" onClick={handleCancel}
+                className="px-5 py-2 text-sm font-medium rounded-md transition-colors"
+                style={{ background: 'var(--bg-hover)', color: 'var(--text-secondary)' }}
+              >İptal</button>
             </div>
           </form>
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-700">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Sembol
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Tarih
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Tür
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Fiyat
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Miktar
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Not
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  İşlemler
-                </th>
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ background: 'var(--bg-table-head)' }}>
+                {['Sembol', 'Tarih', 'Tür', 'Fiyat', 'Miktar', 'Not', 'İşlemler'].map((h, i) => (
+                  <th key={h} className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider ${[3,4].includes(i) ? 'text-right' : i === 6 ? 'text-right' : 'text-left'}`}
+                    style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
+                  >{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+            <tbody>
               {filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                    <ArrowLeftRight className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <td colSpan={7} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                    <ArrowLeftRight className="w-10 h-10 mx-auto mb-2 opacity-40" />
                     <p>Henüz işlem eklenmemiş</p>
                   </td>
                 </tr>
               ) : (
                 filteredTransactions.map((transaction) => (
-                  <tr
-                    key={transaction.id}
-                    className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                  <tr key={transaction.id} className="transition-colors"
+                    style={{ borderBottom: '1px solid var(--border-light)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">
+                    <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-heading)' }}>
                       {transaction.symbol.code || transaction.symbol.name}
                     </td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
+                    <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>
                       {new Date(transaction.date).toLocaleDateString('tr-TR')}
                     </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                          transaction.type === 'B'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold"
+                        style={{
+                          background: transaction.type === 'B' ? 'var(--success-soft)' : 'var(--danger-soft)',
+                          color: transaction.type === 'B' ? 'var(--success)' : 'var(--danger)',
+                        }}
                       >
-                        {transaction.type === 'B' ? (
-                          <>
-                            <TrendingUp className="w-3 h-3" />
-                            Alım
-                          </>
-                        ) : (
-                          <>
-                            <TrendingDown className="w-3 h-3" />
-                            Satım
-                          </>
-                        )}
+                        {transaction.type === 'B' ? (<><TrendingUp className="w-3 h-3" />Alım</>) : (<><TrendingDown className="w-3 h-3" />Satım</>)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right text-gray-700 dark:text-gray-300 font-mono">
+                    <td className="px-4 py-3 text-right font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
                       {transaction.price.toFixed(6)}
                     </td>
-                    <td className="px-6 py-4 text-right text-gray-700 dark:text-gray-300 font-mono">
+                    <td className="px-4 py-3 text-right font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
                       {transaction.quantity.toFixed(4)}
                     </td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300 max-w-xs truncate">
+                    <td className="px-4 py-3 max-w-xs truncate" style={{ color: 'var(--text-secondary)' }}>
                       {transaction.note || '-'}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleEdit(transaction)}
-                          className="p-2 text-blue-500 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                          title="Düzenle"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(transaction.id)}
-                          className="p-2 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                          title="Sil"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-1">
+                        <button onClick={() => handleEdit(transaction)}
+                          className="p-1.5 rounded-md transition-colors" title="Düzenle"
+                          style={{ color: 'var(--accent)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-soft)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                        ><Edit2 size={15} /></button>
+                        <button onClick={() => handleDelete(transaction.id)}
+                          className="p-1.5 rounded-md transition-colors" title="Sil"
+                          style={{ color: 'var(--danger)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--danger-soft)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                        ><Trash2 size={15} /></button>
                       </div>
                     </td>
                   </tr>
