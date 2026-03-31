@@ -241,7 +241,7 @@ export default function Home() {
     : 0;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>
@@ -253,7 +253,7 @@ export default function Home() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
@@ -282,7 +282,7 @@ export default function Home() {
       </div>
 
       {/* Market Rates */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -333,7 +333,7 @@ export default function Home() {
       </div>
 
       {/* Portfolio Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -410,7 +410,7 @@ export default function Home() {
         <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-heading)' }}>
           Hızlı İşlemler
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
