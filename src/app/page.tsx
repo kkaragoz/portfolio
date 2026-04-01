@@ -11,7 +11,8 @@ import {
   Activity,
   DollarSign,
   Package,
-  RefreshCw
+  RefreshCw,
+  HardDrive
 } from "lucide-react";
 
 interface Stats {
@@ -51,11 +52,15 @@ export default function Home() {
     portfolio_value: 0,
   });
   const [portfolioLoading, setPortfolioLoading] = useState(true);
+  const [isWindows, setIsWindows] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupResult, setBackupResult] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStats();
     fetchMarketRates();
     fetchPortfolioSummary();
+    setIsWindows(navigator.userAgent.includes('Windows'));
   }, []);
 
   const fetchStats = async () => {
@@ -169,6 +174,30 @@ export default function Home() {
       
       setTimeout(() => {
         setPriceUpdateResult(null);
+      }, 5000);
+    }
+  };
+
+  const backupDatabase = async () => {
+    setBackupLoading(true);
+    setBackupResult(null);
+
+    try {
+      const response = await fetch('/api/backup', { method: 'POST' });
+      const data = await response.json();
+
+      if (data.ok) {
+        setBackupResult(`${data.message}: ${data.path}`);
+      } else {
+        setBackupResult(`Hata: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      setBackupResult('Yedek alınırken hata oluştu');
+    } finally {
+      setBackupLoading(false);
+      setTimeout(() => {
+        setBackupResult(null);
       }, 5000);
     }
   };
@@ -433,6 +462,43 @@ export default function Home() {
               </Link>
             );
           })}
+
+          {/* Backup — only on Windows */}
+          {isWindows && (
+            <div className="card p-5">
+              <div
+                className="w-10 h-10 rounded-md flex items-center justify-center mb-3"
+                style={{ background: 'var(--danger-soft)' }}
+              >
+                <HardDrive className="w-5 h-5" style={{ color: '#ea5455' }} />
+              </div>
+              <h3
+                className="text-sm font-semibold mb-1"
+                style={{ color: 'var(--text-heading)' }}
+              >
+                Veritabanı Yedeği
+              </h3>
+              <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+                PostgreSQL veritabanının yedeğini alın
+              </p>
+              <button
+                onClick={backupDatabase}
+                disabled={backupLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 text-white text-xs font-medium rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: '#ea5455' }}
+                onMouseEnter={(e) => { if (!backupLoading) e.currentTarget.style.opacity = '0.85'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+              >
+                <HardDrive className={`w-3.5 h-3.5 ${backupLoading ? 'animate-pulse' : ''}`} />
+                {backupLoading ? 'Yedekleniyor...' : 'Yedek Al'}
+              </button>
+              {backupResult && (
+                <div className="mt-2 p-2 rounded text-xs" style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)' }}>
+                  {backupResult}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
