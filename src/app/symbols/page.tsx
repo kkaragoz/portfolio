@@ -15,6 +15,7 @@ interface Symbol {
   code2: Tur | null;
   code3: string | null;
   note: string | null;
+  url: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -51,6 +52,7 @@ export default function SymbolsPage() {
     code2: '',
     code3: '',
     note: '',
+    url: '',
   });
 
   useEffect(() => {
@@ -111,7 +113,7 @@ export default function SymbolsPage() {
         await fetchSymbols();
       }
 
-      setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '' });
+      setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '', url: '' });
       setShowForm(false);
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -128,6 +130,7 @@ export default function SymbolsPage() {
       code2: symbol.code2 || '',
       code3: symbol.code3 || '',
       note: symbol.note || '',
+      url: symbol.url || '',
     });
     setShowForm(true);
   };
@@ -146,7 +149,7 @@ export default function SymbolsPage() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '' });
+    setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '', url: '' });
   };
 
   if (loading) {
@@ -235,6 +238,14 @@ export default function SymbolsPage() {
                 style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Web Sayfası</label>
+              <input type="url" maxLength={500} value={formData.url}
+                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                className={inputClass} placeholder="https://..."
+                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+              />
+            </div>
             <div className="md:col-span-2 flex gap-2">
               <button type="submit" className="px-5 py-2 text-white text-sm font-medium rounded-md transition-opacity"
                 style={{ background: 'var(--success)' }}
@@ -261,7 +272,7 @@ export default function SymbolsPage() {
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Toplam {symbols.length} sembol</p>
         </div>
         <button
-          onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '' }); }}
+          onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ code: '', name: '', code1: '', code2: '', code3: '', note: '', url: '' }); }}
           className="flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-md transition-opacity"
           style={{ background: 'var(--accent)' }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}

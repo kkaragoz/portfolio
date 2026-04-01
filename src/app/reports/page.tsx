@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Treemap, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { X, TrendingUp, TrendingDown } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
 
 interface GridData {  
   code: string | null;
@@ -85,7 +85,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<'USD' | 'TRY'>('USD');
   const [usdTry, setUsdTry] = useState<number | null>(null);
-  const [selectedSymbol, setSelectedSymbol] = useState<{ code: string; name: string; symbolId: number } | null>(null);
+  const [selectedSymbol, setSelectedSymbol] = useState<{ code: string; name: string; symbolId: number; url: string | null } | null>(null);
   const [performanceData, setPerformanceData] = useState<PerformanceData | null>(null);
   const [loadingPerformance, setLoadingPerformance] = useState(false);
   const [performanceGrid, setPerformanceGrid] = useState<PerformanceGridItem[]>([]);
@@ -217,7 +217,17 @@ export default function ReportsPage() {
 
   const handleRowClick = async (item: GridData) => {
     if (item.symbol_id) {
-      setSelectedSymbol({ code: item.code || '', name: item.name || '', symbolId: item.symbol_id });
+      let symbolUrl: string | null = null;
+      try {
+        const res = await fetch(`/api/symbols/${item.symbol_id}`);
+        if (res.ok) {
+          const symbolData = await res.json();
+          symbolUrl = symbolData.url || null;
+        }
+      } catch (e) {
+        // ignore
+      }
+      setSelectedSymbol({ code: item.code || '', name: item.name || '', symbolId: item.symbol_id, url: symbolUrl });
       await fetchPerformance(item.symbol_id);
     }
   };
@@ -770,14 +780,27 @@ const formatCurrency2Digits = (value: number) => {
                   <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{selectedSymbol.name}</p>
                 )}
               </div>
-              <button
-                onClick={() => setSelectedSymbol(null)}
-                className="p-1.5 rounded-md transition-colors"
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-              >
-                <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-              </button>
+              <div className="flex items-center gap-1">
+                {selectedSymbol.url && (
+                  <button
+                    onClick={() => window.open(selectedSymbol.url!, '_blank', 'noopener,noreferrer')}
+                    className="p-1.5 rounded-md transition-colors"
+                    title="Web sayfasını aç"
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <ExternalLink className="w-5 h-5" style={{ color: 'var(--accent)' }} />
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedSymbol(null)}
+                  className="p-1.5 rounded-md transition-colors"
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+                </button>
+              </div>
             </div>
 
             {/* Content */}

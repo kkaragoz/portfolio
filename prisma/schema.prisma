@@ -17,6 +17,7 @@ model Symbol {
   code         String?       @db.VarChar(10)
   code1        BIRIM?
   code2        Tur?
+  url          String?       @db.VarChar(500)
   prices       Price[]
   transactions Transaction[]
 

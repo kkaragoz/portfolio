@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, code, code1, code2, code3, note } = body;
+    const { name, code, code1, code2, code3, note, url } = body;
 
     // Validate enums
     const validBirim = ['TL', 'Doviz', 'Karma'];
@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
         code2: code2 || null,
         code3: code3 ? code3.substring(0, 5) : null,
         note: note ? note.substring(0, 255) : null,
+        url: url ? url.substring(0, 500) : null,
       },
     });
 

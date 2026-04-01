@@ -1,6 +1,24 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const symbol = await prisma.symbol.findUnique({
+      where: { id: parseInt(id) },
+    });
+    if (!symbol) {
+      return NextResponse.json({ error: 'Symbol not found' }, { status: 404 });
+    }
+    return NextResponse.json(symbol);
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch symbol' }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -33,7 +51,7 @@ export async function PATCH(
     const { id } = await params;
     const numId = parseInt(id);
     const body = await request.json();
-    const { name, code, code1, code2, code3, note } = body;
+    const { name, code, code1, code2, code3, note, url } = body;
 
     // Validate enums
     const validBirim = ['TL', 'Doviz', 'Karma'];
@@ -55,6 +73,7 @@ export async function PATCH(
         code2: code2 || null,
         code3: code3 ? code3.substring(0, 5) : null,
         note: note ? note.substring(0, 255) : null,
+        url: url ? url.substring(0, 500) : null,
       },
     });
 
