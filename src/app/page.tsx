@@ -52,7 +52,7 @@ export default function Home() {
     portfolio_value: 0,
   });
   const [portfolioLoading, setPortfolioLoading] = useState(true);
-  const [isWindows, setIsWindows] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupResult, setBackupResult] = useState<string | null>(null);
 
@@ -60,7 +60,7 @@ export default function Home() {
     fetchStats();
     fetchMarketRates();
     fetchPortfolioSummary();
-    setIsWindows(navigator.userAgent.includes('Windows'));
+    setIsLocalhost(['localhost', '127.0.0.1'].includes(window.location.hostname));
   }, []);
 
   const fetchStats = async () => {
@@ -463,8 +463,8 @@ export default function Home() {
             );
           })}
 
-          {/* Backup — only on Windows */}
-          {isWindows && (
+          {/* Backup — only on localhost */}
+          {isLocalhost && (
             <div className="card p-5">
               <div
                 className="w-10 h-10 rounded-md flex items-center justify-center mb-3"
