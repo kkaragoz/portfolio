@@ -1,4 +1,5 @@
-✅ İŞLEM YÖNETİM SİSTEMİ - KURULUM TAMAMLANDI
+
+# İŞLEM YÖNETİM SİSTEMİ - DEPLOYMENT & KURULUM REHBERİ
 
 ## ✨ Tamamlanan Özellikler
 
@@ -72,31 +73,90 @@
 
 ---
 
-## 🚀 BAŞLAMAK İÇİN
 
-### ADIM 1: PostgreSQL Kurulu mu?
+---
+
+## 🚀 GELİŞTİRME ORTAMI KURULUMU
+
+### 1. PostgreSQL Kurulu mu?
 Konsolda çalıştırın:
 ```powershell
 psql -U postgres -c "SELECT version();"
 ```
 Şifre: postgres
 
-### ADIM 2: Veritabanı Oluştur
+### 2. Veritabanı Oluştur
 ```powershell
-psql -U postgres -c "CREATE DATABASE mywebapp;"
+psql -U postgres -c "CREATE DATABASE portfolio;"
 ```
 
-### ADIM 3: Ortam Değişkenlerini Kontrol Et
-`.env` dosyasında:
-```
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mywebapp"
+### 3. Ortam Değişkenlerini Kontrol Et
+Proje kökünde `.env` dosyasında:
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/portfolio"
 ```
 
-### ADIM 4: Prisma Migrasyonu
+### 4. Bağımlılıkları Kur
 ```powershell
-cd c:\webapp\mywebapp
+npm install
+```
+
+### 5. Prisma Migrasyonu
+```powershell
 npx prisma migrate dev --name init
 ```
+
+### 6. Geliştirme Sunucusunu Başlat
+```powershell
+npm run dev
+```
+Tarayıcıda açın: **http://localhost:3000**
+
+---
+
+## 🏭 PRODUCTION DEPLOY ADIMLARI
+
+### 1. Production Ortamı İçin .env.production
+```env
+DATABASE_URL="postgresql://kullanici:sifre@host:5432/portfolio"
+NODE_ENV="production"
+```
+
+### 2. Production Build ve Çalıştırma
+```powershell
+npm run build
+npm start
+```
+
+### 3. Reverse Proxy (Nginx) Örneği
+```nginx
+server {
+  listen 80;
+  server_name senin-domain.com;
+  location / {
+    proxy_pass http://localhost:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+### 4. SSL (Let's Encrypt ile önerilir)
+Production ortamında HTTPS zorunlu olmalıdır.
+
+### 5. Yedekleme & Geri Yükleme
+**Yedek Al:**
+```powershell
+pg_dump -U postgres -d portfolio -F c -f backup_$(Get-Date -Format yyyyMMdd).dump
+```
+**Geri Yükle:**
+```powershell
+pg_restore -U postgres -d portfolio -c backup_YYYYMMDD.dump
+```
+
+---
 
 ### ADIM 5: Uygulamayı Başlat
 ```powershell
@@ -110,7 +170,7 @@ Tarayıcıda açın: **http://localhost:3000**
 ## 📋 PROJE YAPISI
 
 ```
-c:\webapp\mywebapp\
+c:\webapp\portfolio\
 ├── src/
 │   ├── app/
 │   │   ├── api/
@@ -177,7 +237,7 @@ npx prisma migrate reset
 - **Provider**: PostgreSQL
 - **Host**: localhost
 - **Port**: 5432
-- **Database**: mywebapp
+- **Database**: portfolio
 - **User**: postgres
 - **Adapter**: @prisma/adapter-pg
 
@@ -201,23 +261,27 @@ Uygulama aşağıdaki cihazlarda test edilmiştir:
 
 ---
 
-## 🔐 GÜVENLİK NOTU
 
-Bu uygulama geliştirme için özel olarak oluşturulmuştur.
-- Kimlik doğrulama yok
-- Şifre gerekmez
-- Tüm veriler açıktır
+## 🔐 GÜVENLİK & PRODUCTION NOTLARI
 
-Production kullanımı için:
-1. Authentication ekleyin (NextAuth.js v.b.)
-2. HTTPS zorunlu yapın
-3. Veri şifrelemesi ekleyin
-4. Rate limiting yapılandırın
-5. CORS ayarını sıkı yapın
+> **UYARI:** Bu uygulama varsayılan olarak kimlik doğrulama içermez ve tüm veriler açıktır. Production ortamında aşağıdaki önlemleri mutlaka alın:
+
+- [ ] Kimlik doğrulama ekleyin (örn. NextAuth.js, Auth0)
+- [ ] HTTPS zorunlu yapın (SSL/TLS)
+- [ ] Ortam değişkenlerini gizli tutun (.env dosyalarını paylaşmayın)
+- [ ] Rate limiting ve brute-force koruması ekleyin
+- [ ] CORS ayarlarını sıkılaştırın
+- [ ] Veritabanı erişim izinlerini minimumda tutun
+- [ ] Gereksiz API endpointlerini kapatın
+- [ ] Loglama ve hata izleme (örn. Sentry) entegre edin
+- [ ] Yedekleme otomasyonu kurun
 
 ---
 
-## 📞 HATA AYIKLAMA
+---
+
+
+## 🛠️ HATA AYIKLAMA & LOG
 
 ### PostgreSQL Bağlantı Hatası
 ```
@@ -240,11 +304,15 @@ npx prisma generate
 ### API Endpoints Çalışmıyor
 1. Tarayıcı F12 → Console → Hataları kontrol et
 2. Network sekmesinde API çağrılarını görün
+
 3. `.env` dosyasını kontrol et
+4. Sunucu loglarını ve terminal çıktısını incele
+5. Gerekirse `npm run lint` ve `npm run build` ile hataları tespit et
 
 ---
 
-## 🎯 SONRAKİ ADIMLAR
+
+## 🎯 GELİŞTİRMEDE SONRAKİ ADIMLAR
 
 1. **Sembol Ekle** (/symbols)
    - En az 1 sembol oluştur
@@ -266,7 +334,8 @@ npx prisma generate
 
 ---
 
-## 📦 YÜKLÜ PAKETLER
+
+## 📦 YÜKLÜ ANA PAKETLER
 
 - next@16.0.7
 - react@19.2.0
@@ -281,11 +350,21 @@ npx prisma generate
 
 ---
 
-## 📄 LİSANS
+
+---
+
+## 📚 REFERANSLAR & EK DÖKÜMANLAR
+
+- [README.md](README.md): Genel proje açıklaması ve kullanım
+- [SETUP.md](SETUP.md): Detaylı kurulum ve PostgreSQL yönergeleri
+- [Prisma Belgeleri](https://www.prisma.io/docs/)
+- [Next.js Deployment](https://nextjs.org/docs/deployment)
+
 
 Bu proje özel kullanım amacıyla oluşturulmuştur.
 
 ---
+
 
 ✨ **Başarılı Geliştiriciler Dileriz!** ✨
 
