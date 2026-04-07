@@ -1,7 +1,6 @@
-const CACHE_NAME = 'portfolio-v1';
+const CACHE_NAME = 'portfolio-v2';
 const PRECACHE_URLS = [
   '/',
-  '/manifest.json',
   '/portfolio1.png',
   '/portfolio2.png',
   '/offline.html',
@@ -30,6 +29,23 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.pathname.startsWith('/api/')) return;
+
+  // Always refresh the manifest from the network so installed PWAs pick up
+  // orientation and icon changes instead of staying on a stale cached copy.
+  if (url.pathname === '/manifest.json') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
   // Navigation requests: network-first, fallback to offline page
   if (request.mode === 'navigate') {

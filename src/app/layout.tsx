@@ -55,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="tr" className={darkMode ? 'dark' : ''}>
       <head>
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href="/manifest.json?v=2" />
         <meta name="theme-color" content="#262626" />
         <meta name="description" content="Kenan Portföyü" />
         <link rel="icon" href="/portfolio2.png" sizes="192x192" type="image/png" />
