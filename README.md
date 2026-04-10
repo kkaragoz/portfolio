@@ -181,8 +181,11 @@ npx prisma studio
 4. Vercel Dashboard'dan ortam değişkenlerini ayarlayın:
    ```
    DATABASE_URL=your_postgres_connection_string
+   CRON_SECRET=uzun-ve-rastgele-bir-gizli-anahtar
    ```
 5. Deploy'ı başlatın
+
+Projede [vercel.json](vercel.json) ile `/api/prices/update` endpoint'i için günlük cron tanımı bulunur. Schedule değeri `1 8 * * *` olduğu için Vercel cron'u her gün 08:01 UTC, yani Türkiye saatiyle yaklaşık 11:01 civarında çalışır. Hobby planda çağrı tam 11:01 garantisi vermez; ilgili saat aralığında tetiklenir.
 
 ### Kendi Sunucuya Deploy Etmek İçin
 

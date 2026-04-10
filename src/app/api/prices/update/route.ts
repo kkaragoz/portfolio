@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 
+export const dynamic = 'force-dynamic';
+
 interface BalanceRow {
   id: number;
   name: string;
@@ -25,14 +27,20 @@ interface PriceUpdateResult {
   error?: string;
 }
 
-// Ticker verisi için örnek bir arayüz (Interface)
-interface TickerData {
-  pair: string;
-  last: number;
-  bid: number;
-  ask: number;
-  // Diğer alanlar API yanıtına göre genişletilebilir
+interface PriceUpdateSummary {
+  total: number;
+  processed: number;
+  successCount: number;
+  failCount: number;
+  message: string;
+  results: PriceUpdateResult[];
 }
+
+type PriceUpdateEvent =
+  | { type: 'start'; total: number; processed: number }
+  | { type: 'progress'; total: number; processed: number }
+  | { type: 'complete'; total: number; processed: number; message: string }
+  | { type: 'error'; message: string };
 
 /**
  * USD/TRY kurunu çeker
@@ -270,237 +278,295 @@ async function fetchYAHOOPrice(code: string): Promise<number | null> {
   }
 }
 
+function getUtcDateOnly(date = new Date()) {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+}
+
+async function savePortfolioSnapshot() {
+  try {
+    console.log('\n=== Portföy Değeri Hesaplanıyor ===');
+    const portfolioResult = await prisma.$queryRaw<[{ portfolio_value: number }]>`
+      SELECT SUM(market_value) AS portfolio_value FROM rep_grid
+    `;
+
+    const portfolioValue = portfolioResult[0]?.portfolio_value ?? 0;
+    console.log(`💰 Toplam Portföy Değeri: ${portfolioValue.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`);
+
+    const today = getUtcDateOnly();
+    console.log(`📅 Snapshot Tarihi: ${today.toISOString().split('T')[0]}`);
+
+    const snapshot = await prisma.portfolioSnapshot.upsert({
+      where: { date: today },
+      update: {
+        value: portfolioValue,
+        updatedAt: new Date()
+      },
+      create: {
+        date: today,
+        value: portfolioValue
+      }
+    });
+
+    console.log(`✅ Portföy değeri kaydedildi (ID: ${snapshot.id})`);
+  } catch (snapshotError) {
+    console.error('⚠️ Portföy değeri kaydedilemedi:', snapshotError);
+    if (snapshotError instanceof Error) {
+      console.error('   Hata detayı:', snapshotError.message);
+      console.error('   Stack:', snapshotError.stack);
+    }
+  }
+}
+
+async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Promise<PriceUpdateSummary> {
+  console.log('=== Fiyat Güncelleme İşlemi Başladı ===');
+  console.log('Tarih:', new Date().toISOString());
+
+  const usdTryRate = await fetchUsdTryRate();
+  if (!usdTryRate) {
+    throw new Error('USD/TRY kuru alınamadı');
+  }
+
+  console.log(`\n💱 Dönüşüm Kuru: 1 USD = ${usdTryRate.toFixed(4)} TRY\n`);
+
+  const balanceData = await prisma.$queryRaw<BalanceRow[]>`
+    SELECT * FROM vw_balance
+  `;
+
+  const total = balanceData.length;
+  console.log(`Toplam ${total} sembol bulundu`);
+
+  onEvent?.({ type: 'start', total, processed: 0 });
+
+  if (!balanceData || total === 0) {
+    console.warn('⚠️ Güncellenecek kayıt bulunamadı');
+    return {
+      total: 0,
+      processed: 0,
+      successCount: 0,
+      failCount: 0,
+      message: 'Güncellenecek kayıt bulunamadı',
+      results: []
+    };
+  }
+
+  const results: PriceUpdateResult[] = [];
+
+  for (let i = 0; i < balanceData.length; i++) {
+    const row = balanceData[i];
+    console.log(`\n[${i + 1}/${balanceData.length}] İşleniyor: ${row.name} (${row.code || 'KOD YOK'})`);
+
+    if (!row.code) {
+      console.error(`❌ ${row.name}: Kod bilgisi eksik`);
+      results.push({
+        symbol: row.name,
+        code: 'N/A',
+        success: false,
+        error: 'Kod bilgisi eksik'
+      });
+      onEvent?.({ type: 'progress', processed: i + 1, total });
+      continue;
+    }
+
+    let newPrice: number | null = null;
+    console.log(`  Market Category: ${row.market_category || 'Belirtilmemiş'}`);
+
+    if (row.market_category === 'B') {
+      console.log('  → BIST API kullanılıyor...');
+      newPrice = await fetchBISTPrice(row.code);
+    } else if (row.market_category === 'K') {
+      if (row.code === 'USDT' || row.code === 'TETHER' || row.code === 'USDC') {
+        newPrice = 1;
+        console.log('  → TETHER stablecoin olarak 1 USD kabul edildi');
+      } else {
+        console.log('  → BTCTURK API kullanılıyor...');
+        newPrice = await fetchCryptoPrice(row.code);
+      }
+    } else if (row.market_category === 'F') {
+      console.log('  → Tefas API kullanılıyor...');
+      newPrice = await fetchTefasPrice(row.code);
+    } else if (row.market_category === 'E') {
+      console.log('  → YAHOO API kullanılıyor...');
+      newPrice = await fetchYAHOOPrice(row.code);
+    } else {
+      console.log('  → Varsayılan: Tefas API kullanılıyor...');
+      newPrice = await fetchTefasPrice(row.code);
+    }
+
+    console.log(`  API Sonucu: ${newPrice !== null ? newPrice.toFixed(4) : 'BAŞARISIZ'}`);
+
+    if (newPrice !== null && newPrice > 0) {
+      let priceToSave = newPrice;
+      if (row.market_category === 'B' || row.market_category === 'F') {
+        priceToSave = newPrice / usdTryRate;
+        console.log(`  💱 TRY → USD dönüşümü: ${newPrice.toFixed(4)} TRY = ${priceToSave.toFixed(4)} USD`);
+      } else if (row.market_category === 'K') {
+        console.log(`  💵 Kripto zaten USD cinsinden: ${priceToSave.toFixed(4)} USD`);
+      }
+
+      const lastTransaction = await prisma.transaction.findFirst({
+        where: { symbolId: row.id },
+        orderBy: { date: 'desc' }
+      });
+
+      const today = getUtcDateOnly();
+
+      console.log('  💾 Veritabanına kaydediliyor...');
+      console.log(`  📅 Kayıt Tarihi: ${today.toISOString().split('T')[0]}`);
+      if (lastTransaction?.price) {
+        const change = parseFloat((((priceToSave - lastTransaction.price) / lastTransaction.price * 100).toFixed(2)));
+        console.log(`  Son Fiyat: ${lastTransaction.price.toFixed(4)} USD → Yeni Fiyat: ${priceToSave.toFixed(4)} USD (${change > 0 ? '+' : ''}${change.toFixed(2)}%)`);
+      }
+
+      await prisma.price.upsert({
+        where: {
+          symbolId_date: {
+            symbolId: row.id,
+            date: today
+          }
+        },
+        update: {
+          price: priceToSave
+        },
+        create: {
+          symbolId: row.id,
+          date: today,
+          price: priceToSave
+        }
+      });
+
+      console.log('  ✅ Başarıyla kaydedildi');
+
+      results.push({
+        symbol: row.name,
+        code: row.code,
+        oldPrice: lastTransaction?.price,
+        newPrice: priceToSave,
+        success: true
+      });
+    } else {
+      console.error('  ❌ Fiyat bilgisi alınamadı');
+      results.push({
+        symbol: row.name,
+        code: row.code,
+        success: false,
+        error: 'Fiyat bilgisi alınamadı'
+      });
+    }
+
+    onEvent?.({ type: 'progress', processed: i + 1, total });
+  }
+
+  const successCount = results.filter((result) => result.success).length;
+  const failCount = results.length - successCount;
+
+  console.log('\n=== Fiyat Güncelleme İşlemi Tamamlandı ===');
+  console.log(`✅ Başarılı: ${successCount}`);
+  console.log(`❌ Başarısız: ${failCount}`);
+  console.log(`📊 Toplam: ${results.length}`);
+
+  if (failCount > 0) {
+    console.log('\n⚠️ Başarısız işlemler:');
+    results.filter((result) => !result.success).forEach((result) => {
+      console.log(`  - ${result.symbol} (${result.code}): ${result.error}`);
+    });
+  }
+
+  await savePortfolioSnapshot();
+
+  return {
+    total: results.length,
+    processed: results.length,
+    successCount,
+    failCount,
+    message: `${successCount} / ${results.length} fiyat başarıyla güncellendi`,
+    results
+  };
+}
+
+function buildErrorResponse(error: unknown, message: string, status = 500) {
+  const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
+
+  return NextResponse.json(
+    {
+      error: message,
+      message: errorMessage
+    },
+    {
+      status,
+      headers: {
+        'Cache-Control': 'no-store'
+      }
+    }
+  );
+}
+
+export async function GET(request: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return NextResponse.json(
+      { error: 'CRON_SECRET tanımlı değil' },
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store'
+        }
+      }
+    );
+  }
+
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json(
+      { error: 'Yetkisiz istek' },
+      {
+        status: 401,
+        headers: {
+          'Cache-Control': 'no-store'
+        }
+      }
+    );
+  }
+
+  try {
+    const summary = await runPriceUpdate();
+
+    return NextResponse.json(summary, {
+      headers: {
+        'Cache-Control': 'no-store'
+      }
+    });
+  } catch (error) {
+    console.error('\n🚨 HATA: Cron fiyat güncelleme işlemi başarısız oldu!');
+    console.error('Hata Detayı:', error);
+    return buildErrorResponse(error, 'Fiyat güncellenirken hata oluştu');
+  }
+}
+
 export async function POST() {
   try {
-    console.log('=== Fiyat Güncelleme İşlemi Başladı ===');
-    console.log('Tarih:', new Date().toISOString());
-    
-    // Streaming response için encoder oluştur
     const encoder = new TextEncoder();
-    let cancelled = false;
 
     const readableStream = new ReadableStream({
       async start(controller) {
+        const sendEvent = (event: PriceUpdateEvent) => {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        };
+
         try {
-          // USD/TRY kurunu al
-          const usdTryRate = await fetchUsdTryRate();
-          if (!usdTryRate) {
-            console.error('⚠️ USD/TRY kuru alınamadı, işlem iptal ediliyor');
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'USD/TRY kuru alınamadı' })}\n\n`));
-            controller.close();
-            return;
-          }
-          
-          console.log(`\n💱 Dönüşüm Kuru: 1 USD = ${usdTryRate.toFixed(4)} TRY\n`);
-          
-          // vw_balance view'ından balance > 0 olan kayıtları çek
-          const balanceData = await prisma.$queryRaw<BalanceRow[]>`
-            SELECT * FROM vw_balance
-          `;
-          
-          console.log(`Toplam ${balanceData.length} sembol bulundu`);
-
-          if (!balanceData || balanceData.length === 0) {
-            console.warn('⚠️ Güncellenecek kayıt bulunamadı');
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'complete', total: 0, processed: 0, message: 'Güncellenecek kayıt bulunamadı' })}\n\n`));
-            controller.close();
-            return;
-          }
-
-          const results: PriceUpdateResult[] = [];
-          const total = balanceData.length;
-
-          // İlk olarak toplam sayıyı gönder
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'start', total, processed: 0 })}\n\n`));
-
-          // Her bir sembol için fiyat güncelleme
-          for (let i = 0; i < balanceData.length; i++) {
-            if (cancelled) break;
-
-            const row = balanceData[i];
-            console.log(`\n[${i + 1}/${balanceData.length}] İşleniyor: ${row.name} (${row.code || 'KOD YOK'})`);
-            
-            if (!row.code) {
-              console.error(`❌ ${row.name}: Kod bilgisi eksik`);
-              results.push({
-                symbol: row.name,
-                code: 'N/A',
-                success: false,
-                error: 'Kod bilgisi eksik'
-              });
-              // Progress güncelle
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'progress', processed: i + 1, total })}\n\n`));
-              continue;
-            }
-
-            let newPrice: number | null = null;
-            
-            // Fiyat kaynağına göre işlem yap (market_category alanını kullan)
-            console.log(`  Market Category: ${row.market_category || 'Belirtilmemiş'}`);
-            
-            if (row.market_category === 'B') {
-              // BIST hisse
-              console.log('  → BIST API kullanılıyor...');
-              newPrice = await fetchBISTPrice(row.code);
-            } else if (row.market_category === 'K') {
-              // Kripto para
-              if (row.code=='USDT'||row.code=='TETHER'||row.code=='USDC') 
-              {           
-                newPrice = 1;
-                console.log('  → TETHER stablecoin olarak 1 USD kabul edildi');
-              }
-              else 
-              {
-                console.log('  → BTCTURK API kullanılıyor...');
-                newPrice = await fetchCryptoPrice(row.code);
-              }
-            } else if (row.market_category === 'F') {
-              // Tefas fonu
-              console.log('  → Tefas API kullanılıyor...');
-              newPrice = await fetchTefasPrice(row.code);
-            } 
-            else if (row.market_category === 'E') {
-              // Tefas fonu
-              console.log('  → YAHOO API kullanılıyor...');
-              newPrice = await fetchYAHOOPrice(row.code);
-            } else {
-              // Varsayılan: Tefas
-              console.log('  → Varsayılan: Tefas API kullanılıyor...');
-              newPrice = await fetchTefasPrice(row.code);
-            }
-            
-            console.log(`  API Sonucu: ${newPrice !== null ? newPrice.toFixed(4) : 'BAŞARISIZ'}`);
-
-            if (newPrice !== null && newPrice > 0) {
-              // B ve F tipleri için fiyatı USD'ye çevir
-              let priceToSave = newPrice;
-              if (row.market_category === 'B' || row.market_category === 'F') {
-                priceToSave = newPrice / usdTryRate;
-                console.log(`  💱 TRY → USD dönüşümü: ${newPrice.toFixed(4)} TRY = ${priceToSave.toFixed(4)} USD`);
-              } else if (row.market_category === 'K') {
-                console.log(`  💵 Kripto zaten USD cinsinden: ${priceToSave.toFixed(4)} USD`);
-              }
-              
-              // Son işlemin fiyatını al (opsiyonel: karşılaştırma için)
-              const lastTransaction = await prisma.transaction.findFirst({
-                where: { symbolId: row.id },
-                orderBy: { date: 'desc' }
-              });
-
-              // Bugünün tarihi (sadece tarih kısmı, UTC kullanarak)
-              const now = new Date();
-              const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-
-              console.log(`  💾 Veritabanına kaydediliyor...`);
-              console.log(`  📅 Kayıt Tarihi: ${today.toISOString().split('T')[0]}`);
-              if (lastTransaction?.price) {
-                const change = parseFloat((((priceToSave - lastTransaction.price) / lastTransaction.price * 100).toFixed(2)));
-                console.log(`  Son Fiyat: ${lastTransaction.price.toFixed(4)} USD → Yeni Fiyat: ${priceToSave.toFixed(4)} USD (${change > 0 ? '+' : ''}${change.toFixed(2)}%)`);
-              }
-              
-              // Price tablosuna kaydet (varsa güncelle, yoksa ekle - upsert)
-              await prisma.price.upsert({
-                where: {
-                  symbolId_date: {
-                    symbolId: row.id,
-                    date: today
-                  }
-                },
-                update: {
-                  price: priceToSave
-                },
-                create: {
-                  symbolId: row.id,
-                  date: today,
-                  price: priceToSave
-                }
-              });
-              
-              console.log(`  ✅ Başarıyla kaydedildi`);
-              
-              results.push({
-                symbol: row.name,
-                code: row.code,
-                oldPrice: lastTransaction?.price,
-                newPrice: priceToSave,
-                success: true
-              });
-            } else {
-              console.error(`  ❌ Fiyat bilgisi alınamadı`);
-              results.push({
-                symbol: row.name,
-                code: row.code,
-                success: false,
-                error: 'Fiyat bilgisi alınamadı'
-              });
-            }
-
-            // Her işlemden sonra progress güncelle
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'progress', processed: i + 1, total })}\n\n`));
-          }
-
-          const successCount = results.filter(r => r.success).length;
-          const failCount = results.length - successCount;
-          
-          console.log('\n=== Fiyat Güncelleme İşlemi Tamamlandı ===');
-          console.log(`✅ Başarılı: ${successCount}`);
-          console.log(`❌ Başarısız: ${failCount}`);
-          console.log(`📊 Toplam: ${results.length}`);
-          
-          if (failCount > 0) {
-            console.log('\n⚠️ Başarısız işlemler:');
-            results.filter(r => !r.success).forEach(r => {
-              console.log(`  - ${r.symbol} (${r.code}): ${r.error}`);
-            });
-          }
-
-          // Portföy değerini hesapla ve kaydet
-          try {
-            console.log('\n=== Portföy Değeri Hesaplanıyor ===');
-            const portfolioResult = await prisma.$queryRaw<[{ portfolio_value: number }]>`
-              SELECT SUM(market_value) AS portfolio_value FROM rep_grid
-            `;
-            
-            const portfolioValue = portfolioResult[0]?.portfolio_value ?? 0;
-            console.log(`💰 Toplam Portföy Değeri: ${portfolioValue.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`);
-            
-            // Bugünün tarihini al (UTC kullanarak)
-            const now = new Date();
-            const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-            console.log(`📅 Snapshot Tarihi: ${today.toISOString().split('T')[0]}`);
-            
-            // Upsert: Bugüne ait kayıt varsa güncelle, yoksa yeni kayıt ekle
-            const snapshot = await prisma.portfolioSnapshot.upsert({
-              where: { date: today },
-              update: { 
-                value: portfolioValue,
-                updatedAt: new Date()
-              },
-              create: {
-                date: today,
-                value: portfolioValue
-              }
-            });
-            
-            console.log(`✅ Portföy değeri kaydedildi (ID: ${snapshot.id})`);
-          } catch (snapshotError) {
-            console.error('⚠️ Portföy değeri kaydedilemedi:', snapshotError);
-            if (snapshotError instanceof Error) {
-              console.error('   Hata detayı:', snapshotError.message);
-              console.error('   Stack:', snapshotError.stack);
-            }
-          }
-          
-          // Son mesaj olarak işlem tamamlandığını gönder
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'complete', total: results.length, processed: results.length, message: `${successCount} / ${results.length} fiyat başarıyla güncellendi` })}\n\n`));
-          controller.close();
-
+          const summary = await runPriceUpdate(sendEvent);
+          sendEvent({
+            type: 'complete',
+            total: summary.total,
+            processed: summary.processed,
+            message: summary.message
+          });
         } catch (error) {
           console.error('\n🚨 HATA: Fiyat güncelleme işlemi başarısız oldu!');
           console.error('Hata Detayı:', error);
-          
+
           const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: errorMessage })}\n\n`));
+          sendEvent({ type: 'error', message: errorMessage });
+        } finally {
           controller.close();
         }
       }
@@ -517,15 +583,7 @@ export async function POST() {
   } catch (error) {
     console.error('\n🚨 HATA: Streaming başlatılamadı!');
     console.error('Hata Detayı:', error);
-    
-    const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
-    
-    return NextResponse.json(
-      { 
-        error: 'Fiyat güncellenirken hata oluştu',
-        message: errorMessage
-      },
-      { status: 500 }
-    );
+
+    return buildErrorResponse(error, 'Fiyat güncellenirken hata oluştu');
   }
 }
