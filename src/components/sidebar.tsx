@@ -117,7 +117,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </button>
           {!collapsed && (
             <div className="text-center mt-1">
-              <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>v1.1.1</span>
+              <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>v1.2.1</span>
             </div>
           )}
         </div>

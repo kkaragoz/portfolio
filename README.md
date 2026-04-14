@@ -224,8 +224,8 @@ npx prisma migrate resolve --rolled-back migration_name
 
 ---
 
-**Sürüm**: 1.1.1
-**Son Güncellenme**: 19 ocak 2025
+**Sürüm**: 1.2.1
+**Son Güncellenme**: 14 şubat 2025
 
 
 ## Deploy on Vercel
