@@ -49,10 +49,55 @@ type PriceUpdateEvent =
   | { type: 'complete'; total: number; processed: number; message: string; errors: PriceUpdateErrorItem[] }
   | { type: 'error'; message: string };
 
+interface UsdTryRateResult {
+  rate: number | null;
+  errorMessage?: string;
+}
+
 /**
  * USD/TRY kurunu çeker
  */
-async function fetchUsdTryRate(): Promise<number | null> {
+function stringifyErrorPayload(payload: unknown, maxLength = 300): string | null {
+  if (payload === null || payload === undefined) {
+    return null;
+  }
+
+  if (typeof payload === 'string') {
+    return payload.length > maxLength ? `${payload.slice(0, maxLength)}...` : payload;
+  }
+
+  if (typeof payload === 'number' || typeof payload === 'boolean') {
+    return String(payload);
+  }
+
+  try {
+    const json = JSON.stringify(payload);
+    return json.length > maxLength ? `${json.slice(0, maxLength)}...` : json;
+  } catch {
+    return null;
+  }
+}
+
+function getDetailedErrorMessage(error: unknown, fallbackMessage: string) {
+  if (axios.isAxiosError(error)) {
+    const responseText = stringifyErrorPayload(error.response?.data);
+    const parts = [
+      error.message,
+      error.response?.status ? `Status: ${error.response.status}` : null,
+      responseText ? `Response: ${responseText}` : null,
+    ].filter((part): part is string => Boolean(part));
+
+    return parts.length > 0 ? parts.join(' | ') : fallbackMessage;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+}
+
+async function fetchUsdTryRate(): Promise<UsdTryRateResult> {
   try {
     console.log('    → USD/TRY kuru alınıyor...');
     const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
@@ -60,14 +105,20 @@ async function fetchUsdTryRate(): Promise<number | null> {
     if (response.data?.rates?.TRY) {
       const rate = parseFloat(response.data.rates.TRY);
       console.log(`    → USD/TRY: ${rate.toFixed(4)}`);
-      return rate;
+      return { rate };
     }
     
     console.error('    ✗ USD/TRY kuru alınamadı');
-    return null;
+    return {
+      rate: null,
+      errorMessage: 'USD/TRY kuru yanıt içinde bulunamadı'
+    };
   } catch (error) {
     console.error('    ✗ USD/TRY fetch error:', error);
-    return null;
+    return {
+      rate: null,
+      errorMessage: getDetailedErrorMessage(error, 'USD/TRY kuru alınamadı')
+    };
   }
 }
 
@@ -76,7 +127,7 @@ async function fetchUsdTryRate(): Promise<number | null> {
 /**
  * Tefas fonlarının güncel fiyatlarını çeker (Web Scraping)
  */
-async function fetchTefasPrice(code: string): Promise<number | null> {
+async function fetchTefasPrice(code: string): Promise<number> {
   try {
     // Tefas FonAnaliz sayfasından fiyat bilgisini çek
     const url = `https://www.tefas.gov.tr/FonAnaliz.aspx?FonKod=${code}`;
@@ -118,7 +169,7 @@ async function fetchTefasPrice(code: string): Promise<number | null> {
           
           if (isNaN(price)) {
             console.error(`    ✗ Fiyat parse edilemedi: "${priceText}"`);
-            price = null;
+            throw new Error(`Fiyat parse edilemedi: ${priceText}`);
           } else {
             console.log(`    → Parse edilen fiyat: ${price}`);
           }
@@ -127,28 +178,27 @@ async function fetchTefasPrice(code: string): Promise<number | null> {
     });
 
     if (price === null) {
-      console.error(`    ✗ Tefas fiyat bilgisi bulunamadı: ${code}`);
+      const errorMessage = `Tefas fiyat bilgisi bulunamadı: ${code}. HTML uzunluğu: ${html.length}, .top-list: ${$('.top-list').length}, .top-list li: ${$('.top-list li').length}`;
+      console.error(`    ✗ ${errorMessage}`);
       // Debug için HTML'in bir kısmını logla
       console.log(`    → HTML uzunluğu: ${html.length} karakter`);
       console.log(`    → .top-list elemanları: ${$('.top-list').length}`);
       console.log(`    → .top-list li elemanları: ${$('.top-list li').length}`);
+      throw new Error(errorMessage);
     }
 
     return price;
   } catch (error) {
-    console.error(`    ✗ Tefas scraping hatası (${code}):`, error);
-    if (axios.isAxiosError(error)) {
-      console.error(`    ✗ Status: ${error.response?.status}`);
-      console.error(`    ✗ Response length: ${error.response?.data?.length || 0} karakter`);
-    }
-    return null;
+    const errorMessage = getDetailedErrorMessage(error, `Tefas scraping hatası: ${code}`);
+    console.error(`    ✗ Tefas scraping hatası (${code}): ${errorMessage}`);
+    throw new Error(errorMessage);
   }
 }
 
 /**
  * Borsa Istanbul (BIST) hisse fiyatlarını çeker
  */
-async function fetchBISTPrice(code: string): Promise<number | null> {
+async function fetchBISTPrice(code: string): Promise<number> {
   try {
     // Borsa Istanbul için ücretsiz API servisleri:
     // 1. Investing.com (Web scraping gerektirir)
@@ -175,22 +225,22 @@ async function fetchBISTPrice(code: string): Promise<number | null> {
       return price;
     }
 
-    console.error(`    ✗ BIST fiyat bilgisi bulunamadı: ${code}`);
-    return null;
-  } catch (error) {
-    console.error(`    ✗ BIST exception for ${code}:`, error);
-    if (axios.isAxiosError(error)) {
-      console.error(`    ✗ Status: ${error.response?.status}`);
-      console.error(`    ✗ Response: ${JSON.stringify(error.response?.data).substring(0, 200)}`);
+    if (data?.chart?.error) {
+      throw new Error(`Yahoo Finance: ${data.chart.error.description || data.chart.error.code || 'Bilinmeyen hata'}`);
     }
-    return null;
+
+    throw new Error(`BIST fiyat bilgisi bulunamadı: ${code}`);
+  } catch (error) {
+    const errorMessage = getDetailedErrorMessage(error, `BIST fiyatı alınamadı: ${code}`);
+    console.error(`    ✗ BIST exception for ${code}: ${errorMessage}`);
+    throw new Error(errorMessage);
   }
 }
 
 /**
  * Kripto para fiyatlarını çeker (BTCTURK API)
  */
-async function fetchCryptoPrice(code: string): Promise<number | null> {
+async function fetchCryptoPrice(code: string): Promise<number> {
   try {
     console.log(`    → BTCTURK: ${code} için fiyat aranıyor...`);
     
@@ -218,27 +268,19 @@ async function fetchCryptoPrice(code: string): Promise<number | null> {
       
       if (isNaN(price)) {
         console.error(`    ✗ Fiyat parse edilemedi: ${ticker.last}`);
-        return null;
+        throw new Error(`BTCTURK fiyat parse edilemedi: ${ticker.last}`);
       }
       
       return price;
     } else {
-      console.error(`    ✗ BTCTURK API'den geçersiz yanıt`);
-      console.error(`    ✗ Success: ${response.data?.success}`);
-      console.error(`    ✗ Data length: ${response.data?.data?.length || 0}`);
-      return null;
+      const errorMessage = `BTCTURK API'den geçersiz yanıt. Success: ${response.data?.success}, Data length: ${response.data?.data?.length || 0}, Message: ${response.data?.message ?? 'Yok'}`;
+      console.error(`    ✗ ${errorMessage}`);
+      throw new Error(errorMessage);
     }
   } catch (error) {
-    console.error(`    ✗ BTCTURK exception for ${code}:`, error);
-    if (axios.isAxiosError(error)) {
-      console.error(`    ✗ Status: ${error.response?.status}`);
-      console.error(`    ✗ Response:`, error.response?.data);
-      console.error(`    ✗ Message: ${error.message}`);
-    } else if (error instanceof Error) {
-      console.error(`    ✗ Error message: ${error.message}`);
-      console.error(`    ✗ Error stack: ${error.stack}`);
-    }
-    return null;
+    const errorMessage = getDetailedErrorMessage(error, `BTCTURK fiyatı alınamadı: ${code}`);
+    console.error(`    ✗ BTCTURK exception for ${code}: ${errorMessage}`);
+    throw new Error(errorMessage);
   }
 }
 
@@ -246,7 +288,7 @@ async function fetchCryptoPrice(code: string): Promise<number | null> {
 /**
  * YAHOO Finance fiyatlarını çeker
  */
-async function fetchYAHOOPrice(code: string): Promise<number | null> {
+async function fetchYAHOOPrice(code: string): Promise<number> {
   try {
     // Borsa Istanbul için ücretsiz API servisleri:
     // 1. Investing.com (Web scraping gerektirir)
@@ -273,15 +315,15 @@ async function fetchYAHOOPrice(code: string): Promise<number | null> {
       return price;
     }
 
-    console.error(`    ✗ YAHOO fiyat bilgisi bulunamadı: ${code}`);
-    return null;
-  } catch (error) {
-    console.error(`    ✗ YAHOO exception for ${code}:`, error);
-    if (axios.isAxiosError(error)) {
-      console.error(`    ✗ Status: ${error.response?.status}`);
-      console.error(`    ✗ Response: ${JSON.stringify(error.response?.data).substring(0, 200)}`);
+    if (data?.chart?.error) {
+      throw new Error(`Yahoo Finance: ${data.chart.error.description || data.chart.error.code || 'Bilinmeyen hata'}`);
     }
-    return null;
+
+    throw new Error(`YAHOO fiyat bilgisi bulunamadı: ${code}`);
+  } catch (error) {
+    const errorMessage = getDetailedErrorMessage(error, `YAHOO fiyatı alınamadı: ${code}`);
+    console.error(`    ✗ YAHOO exception for ${code}: ${errorMessage}`);
+    throw new Error(errorMessage);
   }
 }
 
@@ -345,9 +387,9 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
   console.log('=== Fiyat Güncelleme İşlemi Başladı ===');
   console.log('Tarih:', new Date().toISOString());
 
-  const usdTryRate = await fetchUsdTryRate();
+  const { rate: usdTryRate, errorMessage: usdTryErrorMessage } = await fetchUsdTryRate();
   if (!usdTryRate) {
-    console.warn('⚠️ USD/TRY kuru alınamadı. TRY bazlı varlıklar atlanacak.');
+    console.warn(`⚠️ ${usdTryErrorMessage || 'USD/TRY kuru alınamadı. TRY bazlı varlıklar atlanacak.'}`);
   }
 
   if (usdTryRate) {
@@ -406,7 +448,7 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
       if (marketCategory === 'B') {
         requiresUsdConversion = true;
         if (!usdTryRate) {
-          throw new Error('USD/TRY kuru alınamadığı için BIST fiyatı kaydedilemedi');
+          throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için BIST fiyatı kaydedilemedi');
         }
         console.log('  → BIST API kullanılıyor...');
         newPrice = await fetchBISTPrice(row.code);
@@ -421,7 +463,7 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
       } else if (marketCategory === 'F') {
         requiresUsdConversion = true;
         if (!usdTryRate) {
-          throw new Error('USD/TRY kuru alınamadığı için TEFAS fiyatı kaydedilemedi');
+          throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için TEFAS fiyatı kaydedilemedi');
         }
         console.log('  → Tefas API kullanılıyor...');
         newPrice = await fetchTefasPrice(row.code);
@@ -431,7 +473,7 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
       } else {
         requiresUsdConversion = true;
         if (!usdTryRate) {
-          throw new Error('USD/TRY kuru alınamadığı için varsayılan kaynak fiyatı kaydedilemedi');
+          throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için varsayılan kaynak fiyatı kaydedilemedi');
         }
         console.log('  → Varsayılan: Tefas API kullanılıyor...');
         newPrice = await fetchTefasPrice(row.code);
@@ -490,7 +532,7 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
           success: true
         });
       } else {
-        const errorMessage = 'Fiyat bilgisi alınamadı';
+        const errorMessage = `${row.code} için fiyat bilgisi boş döndü`;
         console.error(`  ❌ ${errorMessage}`);
         results.push({
           symbol: row.name,

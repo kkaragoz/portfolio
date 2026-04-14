@@ -667,7 +667,7 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <p className="text-sm mt-3" style={{ color: 'var(--text-primary)' }}>
+                  <p className="text-sm mt-3 whitespace-pre-wrap break-words" style={{ color: 'var(--text-primary)' }}>
                     {errorItem.message}
                   </p>
                 </div>
