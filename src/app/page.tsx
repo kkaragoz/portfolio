@@ -12,7 +12,9 @@ import {
   DollarSign,
   Package,
   RefreshCw,
-  HardDrive
+  HardDrive,
+  AlertTriangle,
+  X
 } from "lucide-react";
 
 interface Stats {
@@ -20,6 +22,10 @@ interface Stats {
   totalTransactions: number;
   totalBuyTransactions: number;
   totalSellTransactions: number;
+}
+
+interface DashboardTransaction {
+  type: string;
 }
 
 interface MarketRates {
@@ -32,6 +38,18 @@ interface PortfolioSummary {
   portfolio_value: number;
 }
 
+interface PriceUpdateErrorItem {
+  symbol: string;
+  code: string;
+  message: string;
+}
+
+type PriceUpdateStreamEvent =
+  | { type: 'start'; total: number; processed: number }
+  | { type: 'progress'; total: number; processed: number }
+  | { type: 'complete'; total: number; processed: number; message: string; errors?: PriceUpdateErrorItem[] }
+  | { type: 'error'; message: string };
+
 export default function Home() {
   const [stats, setStats] = useState<Stats>({
     totalSymbols: 0,
@@ -42,6 +60,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [priceUpdateLoading, setPriceUpdateLoading] = useState(false);
   const [priceUpdateResult, setPriceUpdateResult] = useState<string | null>(null);
+  const [priceUpdateErrors, setPriceUpdateErrors] = useState<PriceUpdateErrorItem[]>([]);
+  const [showPriceUpdateErrors, setShowPriceUpdateErrors] = useState(false);
   const [marketRates, setMarketRates] = useState<MarketRates>({
     usdTry: null,
     btcUsd: null,
@@ -70,11 +90,11 @@ export default function Home() {
         fetch('/api/transactions'),
       ]);
       
-      const symbols = await symbolsRes.json();
-      const transactions = await transactionsRes.json();
+      const symbols = await symbolsRes.json() as unknown[];
+      const transactions = await transactionsRes.json() as DashboardTransaction[];
 
-      const buyCount = transactions.filter((t: any) => t.type === 'B').length;
-      const sellCount = transactions.filter((t: any) => t.type === 'S').length;
+      const buyCount = transactions.filter((transaction) => transaction.type === 'B').length;
+      const sellCount = transactions.filter((transaction) => transaction.type === 'S').length;
 
       setStats({
         totalSymbols: symbols.length,
@@ -124,51 +144,91 @@ export default function Home() {
   const updatePrices = async () => {
     setPriceUpdateLoading(true);
     setPriceUpdateResult(null);
+    setPriceUpdateErrors([]);
+    setShowPriceUpdateErrors(false);
     
     try {
       const response = await fetch('/api/prices/update', {
         method: 'POST',
       });
+
+      if (!response.ok) {
+        let errorMessage = 'Fiyatlar güncellenirken hata oluştu';
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // JSON olmayan hata yanıtlarında varsayılan mesajı koru.
+        }
+
+        throw new Error(errorMessage);
+      }
       
       if (!response.body) {
-        throw new Error('No response body');
+        throw new Error('Yanıt gövdesi alınamadı');
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
       let lastMessage = '';
+      let collectedErrors: PriceUpdateErrorItem[] = [];
+
+      const processStreamEvent = (rawEvent: string) => {
+        const dataLine = rawEvent
+          .split('\n')
+          .find((line) => line.startsWith('data: '));
+
+        if (!dataLine) {
+          return;
+        }
+
+        try {
+          const event = JSON.parse(dataLine.slice(6)) as PriceUpdateStreamEvent;
+
+          if (event.type === 'complete') {
+            lastMessage = event.message || 'Fiyatlar güncellendi';
+            collectedErrors = Array.isArray(event.errors) ? event.errors : [];
+          } else if (event.type === 'error') {
+            lastMessage = `Hata: ${event.message}`;
+          } else if (event.type === 'progress') {
+            lastMessage = `${event.processed}/${event.total} işleniyor...`;
+          }
+        } catch (error) {
+          console.error('Failed to parse SSE message:', error);
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+        const rawEvents = buffer.split('\n\n');
+        buffer = rawEvents.pop() || '';
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const jsonStr = line.slice(6);
-              const data = JSON.parse(jsonStr);
-              
-              if (data.type === 'complete') {
-                lastMessage = data.message || 'Fiyatlar güncellendi';
-              } else if (data.type === 'error') {
-                lastMessage = `Hata: ${data.message}`;
-              } else if (data.type === 'progress') {
-                lastMessage = `${data.processed}/${data.total} işleniyor...`;
-              }
-            } catch (e) {
-              console.error('Failed to parse SSE message:', e);
-            }
-          }
+        for (const rawEvent of rawEvents) {
+          processStreamEvent(rawEvent);
+        }
+
+        if (done) {
+          break;
         }
       }
 
+      if (buffer.trim()) {
+        processStreamEvent(buffer);
+      }
+
       setPriceUpdateResult(lastMessage || 'Fiyatlar güncellendi');
+
+      if (collectedErrors.length > 0) {
+        setPriceUpdateErrors(collectedErrors);
+        setShowPriceUpdateErrors(true);
+      }
     } catch (error) {
       console.error('Error updating prices:', error);
-      setPriceUpdateResult('Fiyatlar güncellenirken hata oluştu');
+      setPriceUpdateResult(error instanceof Error ? `Hata: ${error.message}` : 'Fiyatlar güncellenirken hata oluştu');
     } finally {
       setPriceUpdateLoading(false);
       
@@ -542,6 +602,92 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      {showPriceUpdateErrors && priceUpdateErrors.length > 0 && (
+        <div
+          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowPriceUpdateErrors(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="price-update-errors-title"
+            className="card w-full max-w-2xl max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 p-5" style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-10 h-10 rounded-md flex items-center justify-center"
+                  style={{ background: 'var(--danger-soft)' }}
+                >
+                  <AlertTriangle className="w-5 h-5" style={{ color: '#ea5455' }} />
+                </div>
+                <div>
+                  <h3 id="price-update-errors-title" className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>
+                    Fiyat Güncelleme Hataları
+                  </h3>
+                  <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                    {priceUpdateErrors.length} kayıt işlenemedi. Detaylar aşağıda listeleniyor.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowPriceUpdateErrors(false)}
+                className="p-1.5 rounded-md transition-colors"
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3 overflow-y-auto max-h-[60vh]">
+              {priceUpdateErrors.map((errorItem, index) => (
+                <div
+                  key={`${errorItem.code}-${index}`}
+                  className="p-4 rounded-lg"
+                  style={{ background: 'var(--bg-input)' }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
+                        {errorItem.symbol}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                        Kod: {errorItem.code}
+                      </p>
+                    </div>
+                    <span
+                      className="px-2 py-1 rounded-full text-[11px] font-semibold"
+                      style={{ background: 'var(--danger-soft)', color: '#ea5455' }}
+                    >
+                      Hata
+                    </span>
+                  </div>
+
+                  <p className="text-sm mt-3" style={{ color: 'var(--text-primary)' }}>
+                    {errorItem.message}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end p-5" style={{ borderTop: '1px solid var(--border-color)' }}>
+              <button
+                onClick={() => setShowPriceUpdateErrors(false)}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white transition-all"
+                style={{ background: '#ea5455' }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
