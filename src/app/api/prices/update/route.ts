@@ -97,6 +97,59 @@ function getDetailedErrorMessage(error: unknown, fallbackMessage: string) {
   return fallbackMessage;
 }
 
+function normalizeText(value: string) {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function parseLocalizedNumber(value: string): number | null {
+  const sanitized = value.replace(/[^\d,.-]/g, '').trim();
+  if (!sanitized) {
+    return null;
+  }
+
+  const normalized = sanitized.includes(',')
+    ? sanitized.replace(/\./g, '').replace(',', '.')
+    : sanitized;
+
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function extractBloombergFundPrices(html: string): Map<string, number> {
+  const $ = cheerio.load(html);
+  const table = $('table').filter((_, element) => {
+    const headers = $(element)
+      .find('thead th')
+      .map((__, th) => normalizeText($(th).text()))
+      .get();
+
+    return headers[0] === 'Kod' && headers[2] === 'Fiyat';
+  }).first();
+
+  const prices = new Map<string, number>();
+  if (!table.length) {
+    return prices;
+  }
+
+  table.find('tbody tr').each((_, row) => {
+    const cells = $(row).find('td');
+    if (cells.length < 3) {
+      return;
+    }
+
+    const code = normalizeText(
+      $(cells[0]).find('.font-bold').first().text() || $(cells[0]).text()
+    ).toUpperCase();
+    const price = parseLocalizedNumber($(cells[2]).text());
+
+    if (code && price !== null) {
+      prices.set(code, price);
+    }
+  });
+
+  return prices;
+}
+
 async function fetchUsdTryRate(): Promise<UsdTryRateResult> {
   try {
     console.log('    → USD/TRY kuru alınıyor...');
@@ -125,14 +178,13 @@ async function fetchUsdTryRate(): Promise<UsdTryRateResult> {
 
 
 /**
- * Tefas fonlarının güncel fiyatlarını çeker (Web Scraping)
+ * BloombergHT karşılaştırma tablosundan tüm fon fiyatlarını tek seferde çeker
  */
-async function fetchTefasPrice(code: string): Promise<number> {
+async function fetchBloombergFundPrices(): Promise<Map<string, number>> {
   try {
-    // Tefas FonAnaliz sayfasından fiyat bilgisini çek
-    const url = `https://www.tefas.gov.tr/FonAnaliz.aspx?FonKod=${code}`;
+    const url = 'https://www.bloomberght.com/yatirim-fonlari/fon-karsilastirma';
     
-    console.log(`    → Tefas URL: ${url}`);
+    console.log(`    → BloombergHT URL: ${url}`);
     
     const response = await axios.get(url, {
       headers: {
@@ -142,55 +194,22 @@ async function fetchTefasPrice(code: string): Promise<number> {
       },
     });
 
-    const html = response.data;
-    const $ = cheerio.load(html);
-    
-    // top-list sınıfındaki "Son Fiyat (TL)" bilgisini bul
-    let price: number | null = null;
-    
-    $('.top-list li').each((_, element) => {
-      const $li = $(element);
-      const liText = $li.text().trim();
-      
-      // "Son Fiyat" içeren li elemanını bul
-      if (liText.includes('Son Fiyat')) {
-        const $span = $li.find('span');
-        if ($span.length > 0) {
-          const priceText = $span.text().trim();
-          console.log(`    → Bulunan fiyat metni: "${priceText}"`);
-          
-          // Nokta binlik ayracı, virgül ondalık ayraç
-          // "1.441.371,12" formatını "1441371.12" yapalım
-          const cleanPrice = priceText
-            .replace(/\./g, '')  // Noktaları kaldır (binlik ayraç)
-            .replace(',', '.');  // Virgülü noktaya çevir (ondalık)
-          
-          price = parseFloat(cleanPrice);
-          
-          if (isNaN(price)) {
-            console.error(`    ✗ Fiyat parse edilemedi: "${priceText}"`);
-            throw new Error(`Fiyat parse edilemedi: ${priceText}`);
-          } else {
-            console.log(`    → Parse edilen fiyat: ${price}`);
-          }
-        }
-      }
-    });
+    const html = typeof response.data === 'string' ? response.data : String(response.data);
+    const prices = extractBloombergFundPrices(html);
 
-    if (price === null) {
-      const errorMessage = `Tefas fiyat bilgisi bulunamadı: ${code}. HTML uzunluğu: ${html.length}, .top-list: ${$('.top-list').length}, .top-list li: ${$('.top-list li').length}`;
+    if (prices.size === 0) {
+      const errorMessage = `BloombergHT fon fiyat tablosu parse edilemedi. HTML uzunluğu: ${html.length}`;
       console.error(`    ✗ ${errorMessage}`);
-      // Debug için HTML'in bir kısmını logla
       console.log(`    → HTML uzunluğu: ${html.length} karakter`);
-      console.log(`    → .top-list elemanları: ${$('.top-list').length}`);
-      console.log(`    → .top-list li elemanları: ${$('.top-list li').length}`);
       throw new Error(errorMessage);
     }
 
-    return price;
+    console.log(`    → Parse edilen BloombergHT fon fiyatı sayısı: ${prices.size}`);
+
+    return prices;
   } catch (error) {
-    const errorMessage = getDetailedErrorMessage(error, `Tefas scraping hatası: ${code}`);
-    console.error(`    ✗ Tefas scraping hatası (${code}): ${errorMessage}`);
+    const errorMessage = getDetailedErrorMessage(error, 'BloombergHT fon tablosu alınamadı');
+    console.error(`    ✗ BloombergHT fon tablosu hatası: ${errorMessage}`);
     throw new Error(errorMessage);
   }
 }
@@ -418,6 +437,27 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
     };
   }
 
+  const needsFundPriceTable = balanceData.some((row) => {
+    if (!row.code) {
+      return false;
+    }
+
+    const marketCategory = row.market_category ?? 'F';
+    return marketCategory !== 'B' && marketCategory !== 'K' && marketCategory !== 'E';
+  });
+
+  let bloombergFundPrices: Map<string, number> | null = null;
+  let bloombergFundPricesError: string | null = null;
+
+  if (needsFundPriceTable) {
+    try {
+      bloombergFundPrices = await fetchBloombergFundPrices();
+    } catch (error) {
+      bloombergFundPricesError = getErrorMessage(error);
+      console.error(`⚠️ BloombergHT fon tablosu alınamadı: ${bloombergFundPricesError}`);
+    }
+  }
+
   const results: PriceUpdateResult[] = [];
   const errors: PriceUpdateErrorItem[] = [];
 
@@ -463,10 +503,16 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
       } else if (marketCategory === 'F') {
         requiresUsdConversion = true;
         if (!usdTryRate) {
-          throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için TEFAS fiyatı kaydedilemedi');
+          throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için BloombergHT fon fiyatı kaydedilemedi');
         }
-        console.log('  → Tefas API kullanılıyor...');
-        newPrice = await fetchTefasPrice(row.code);
+        if (!bloombergFundPrices) {
+          throw new Error(bloombergFundPricesError || 'BloombergHT fon tablosu yüklenemedi');
+        }
+        console.log('  → BloombergHT fon tablosu kullanılıyor...');
+        newPrice = bloombergFundPrices.get(row.code.trim().toUpperCase()) ?? null;
+        if (newPrice === null) {
+          throw new Error(`BloombergHT fon tablosunda kod bulunamadı: ${row.code}`);
+        }
       } else if (marketCategory === 'E') {
         console.log('  → YAHOO API kullanılıyor...');
         newPrice = await fetchYAHOOPrice(row.code);
@@ -475,8 +521,14 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
         if (!usdTryRate) {
           throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için varsayılan kaynak fiyatı kaydedilemedi');
         }
-        console.log('  → Varsayılan: Tefas API kullanılıyor...');
-        newPrice = await fetchTefasPrice(row.code);
+        if (!bloombergFundPrices) {
+          throw new Error(bloombergFundPricesError || 'BloombergHT fon tablosu yüklenemedi');
+        }
+        console.log('  → Varsayılan: BloombergHT fon tablosu kullanılıyor...');
+        newPrice = bloombergFundPrices.get(row.code.trim().toUpperCase()) ?? null;
+        if (newPrice === null) {
+          throw new Error(`BloombergHT fon tablosunda kod bulunamadı: ${row.code}`);
+        }
       }
 
       console.log(`  API Sonucu: ${newPrice !== null ? newPrice.toFixed(4) : 'BAŞARISIZ'}`);
