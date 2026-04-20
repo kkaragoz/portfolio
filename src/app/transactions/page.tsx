@@ -349,8 +349,8 @@ export default function TransactionsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: 'var(--bg-table-head)' }}>
-                {['Sembol', 'Tarih', 'Tür', 'Fiyat', 'Miktar', 'Not', 'İşlemler'].map((h, i) => (
-                  <th key={h} className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider ${[3,4].includes(i) ? 'text-right' : i === 6 ? 'text-right' : 'text-left'}`}
+                {['Sembol', 'Tarih', 'Tür', 'Fiyat', 'Miktar', 'Tutar', 'Not', 'İşlemler'].map((h, i) => (
+                  <th key={h} className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider ${[3,4,5].includes(i) ? 'text-right' : i === 7 ? 'text-right' : 'text-left'}`}
                     style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
                   >{h}</th>
                 ))}
@@ -359,7 +359,7 @@ export default function TransactionsPage() {
             <tbody>
               {filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                  <td colSpan={8} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
                     <ArrowLeftRight className="w-10 h-10 mx-auto mb-2 opacity-40" />
                     <p>Henüz işlem eklenmemiş</p>
                   </td>
@@ -392,6 +392,9 @@ export default function TransactionsPage() {
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
                       {transaction.quantity.toFixed(4)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-xs font-semibold" style={{ color: 'var(--text-heading)' }}>
+                      {(transaction.price * transaction.quantity).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="px-4 py-3 max-w-xs truncate" style={{ color: 'var(--text-secondary)' }}>
                       {transaction.note || '-'}
