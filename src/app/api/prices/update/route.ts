@@ -471,7 +471,6 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
         console.log('  → Varsayılan: FVT fon sayfası kullanılıyor...');
         newPrice = await fetchFvtPrice(row.code);
       }
-      }
 
       console.log(`  API Sonucu: ${newPrice !== null ? newPrice.toFixed(4) : 'BAŞARISIZ'}`);
 
