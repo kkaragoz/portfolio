@@ -1,6 +1,6 @@
-# İşlem Yönetim Sistemi - İlk Kurulum Talimatları
+# Portföy Yönetim Sistemi - İlk Kurulum Talimatları
 
-Tebrikler! İşlem Yönetim Sistemi başarıyla kurulmuştur. Uygulamayı çalıştırmaya başlamadan önce PostgreSQL veritabanını ayarlamanız gerekmektedir.
+Tebrikler! Portföy Yönetim Sistemi başarıyla kurulmuştur. Uygulamayı çalıştırmaya başlamadan önce PostgreSQL veritabanını ayarlamanız gerekmektedir.
 
 ## ADIM 1: PostgreSQL Kurulumu
 

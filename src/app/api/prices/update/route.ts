@@ -115,39 +115,46 @@ function parseLocalizedNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function extractBloombergFundPrices(html: string): Map<string, number> {
-  const $ = cheerio.load(html);
-  const table = $('table').filter((_, element) => {
-    const headers = $(element)
-      .find('thead th')
-      .map((__, th) => normalizeText($(th).text()))
-      .get();
 
-    return headers[0] === 'Kod' && headers[2] === 'Fiyat';
-  }).first();
-
-  const prices = new Map<string, number>();
-  if (!table.length) {
-    return prices;
+// FVT fon detay sayfasından fiyatı çeker
+async function fetchFvtPrice(code: string): Promise<number> {
+  try {
+    const normalizedCode = code.trim().toUpperCase();
+    const url = `https://fvt.com.tr/fonlar/yatirim-fonlari/${normalizedCode}`;
+    console.log(`    → FVT URL: ${url}`);
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
+      },
+    });
+    const html = response.data;
+    const $ = cheerio.load(html);
+    // Fiyatı bul: ₺ ile başlayan ilk değer
+    let price: number | null = null;
+    const priceMatch = html.match(/₺\s*([0-9][0-9.,]*)/);
+    if (priceMatch) {
+      price = parseLocalizedNumber(priceMatch[1]);
+    } else {
+      // Alternatif: sayfa içindeki <a> veya <div> metinlerinde ara
+      $('*').each((_, el) => {
+        const text = $(el).text();
+        const m = text.match(/₺\s*([0-9][0-9.,]*)/);
+        if (m) {
+          price = parseLocalizedNumber(m[1]);
+          return false;
+        }
+      });
+    }
+    if (price === null) {
+      throw new Error(`FVT fiyatı bulunamadı: ${code}`);
+    }
+    return price;
+  } catch (error) {
+    const errorMessage = getDetailedErrorMessage(error, `FVT scraping hatası: ${code}`);
+    throw new Error(errorMessage);
   }
-
-  table.find('tbody tr').each((_, row) => {
-    const cells = $(row).find('td');
-    if (cells.length < 3) {
-      return;
-    }
-
-    const code = normalizeText(
-      $(cells[0]).find('.font-bold').first().text() || $(cells[0]).text()
-    ).toUpperCase();
-    const price = parseLocalizedNumber($(cells[2]).text());
-
-    if (code && price !== null) {
-      prices.set(code, price);
-    }
-  });
-
-  return prices;
 }
 
 async function fetchUsdTryRate(): Promise<UsdTryRateResult> {
@@ -177,42 +184,7 @@ async function fetchUsdTryRate(): Promise<UsdTryRateResult> {
 
 
 
-/**
- * BloombergHT karşılaştırma tablosundan tüm fon fiyatlarını tek seferde çeker
- */
-async function fetchBloombergFundPrices(): Promise<Map<string, number>> {
-  try {
-    const url = 'https://www.bloomberght.com/yatirim-fonlari/fon-karsilastirma';
-    
-    console.log(`    → BloombergHT URL: ${url}`);
-    
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-      },
-    });
 
-    const html = typeof response.data === 'string' ? response.data : String(response.data);
-    const prices = extractBloombergFundPrices(html);
-
-    if (prices.size === 0) {
-      const errorMessage = `BloombergHT fon fiyat tablosu parse edilemedi. HTML uzunluğu: ${html.length}`;
-      console.error(`    ✗ ${errorMessage}`);
-      console.log(`    → HTML uzunluğu: ${html.length} karakter`);
-      throw new Error(errorMessage);
-    }
-
-    console.log(`    → Parse edilen BloombergHT fon fiyatı sayısı: ${prices.size}`);
-
-    return prices;
-  } catch (error) {
-    const errorMessage = getDetailedErrorMessage(error, 'BloombergHT fon tablosu alınamadı');
-    console.error(`    ✗ BloombergHT fon tablosu hatası: ${errorMessage}`);
-    throw new Error(errorMessage);
-  }
-}
 
 /**
  * Borsa Istanbul (BIST) hisse fiyatlarını çeker
@@ -437,26 +409,7 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
     };
   }
 
-  const needsFundPriceTable = balanceData.some((row) => {
-    if (!row.code) {
-      return false;
-    }
 
-    const marketCategory = row.market_category ?? 'F';
-    return marketCategory !== 'B' && marketCategory !== 'K' && marketCategory !== 'E';
-  });
-
-  let bloombergFundPrices: Map<string, number> | null = null;
-  let bloombergFundPricesError: string | null = null;
-
-  if (needsFundPriceTable) {
-    try {
-      bloombergFundPrices = await fetchBloombergFundPrices();
-    } catch (error) {
-      bloombergFundPricesError = getErrorMessage(error);
-      console.error(`⚠️ BloombergHT fon tablosu alınamadı: ${bloombergFundPricesError}`);
-    }
-  }
 
   const results: PriceUpdateResult[] = [];
   const errors: PriceUpdateErrorItem[] = [];
@@ -503,16 +456,10 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
       } else if (marketCategory === 'F') {
         requiresUsdConversion = true;
         if (!usdTryRate) {
-          throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için BloombergHT fon fiyatı kaydedilemedi');
+          throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için FVT fon fiyatı kaydedilemedi');
         }
-        if (!bloombergFundPrices) {
-          throw new Error(bloombergFundPricesError || 'BloombergHT fon tablosu yüklenemedi');
-        }
-        console.log('  → BloombergHT fon tablosu kullanılıyor...');
-        newPrice = bloombergFundPrices.get(row.code.trim().toUpperCase()) ?? null;
-        if (newPrice === null) {
-          throw new Error(`BloombergHT fon tablosunda kod bulunamadı: ${row.code}`);
-        }
+        console.log('  → FVT fon sayfası kullanılıyor...');
+        newPrice = await fetchFvtPrice(row.code);
       } else if (marketCategory === 'E') {
         console.log('  → YAHOO API kullanılıyor...');
         newPrice = await fetchYAHOOPrice(row.code);
@@ -521,14 +468,9 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
         if (!usdTryRate) {
           throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için varsayılan kaynak fiyatı kaydedilemedi');
         }
-        if (!bloombergFundPrices) {
-          throw new Error(bloombergFundPricesError || 'BloombergHT fon tablosu yüklenemedi');
-        }
-        console.log('  → Varsayılan: BloombergHT fon tablosu kullanılıyor...');
-        newPrice = bloombergFundPrices.get(row.code.trim().toUpperCase()) ?? null;
-        if (newPrice === null) {
-          throw new Error(`BloombergHT fon tablosunda kod bulunamadı: ${row.code}`);
-        }
+        console.log('  → Varsayılan: FVT fon sayfası kullanılıyor...');
+        newPrice = await fetchFvtPrice(row.code);
+      }
       }
 
       console.log(`  API Sonucu: ${newPrice !== null ? newPrice.toFixed(4) : 'BAŞARISIZ'}`);
