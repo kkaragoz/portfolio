@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import * as cheerio from 'cheerio';
 import axios from 'axios';
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +53,25 @@ interface UsdTryRateResult {
   errorMessage?: string;
 }
 
+interface TefasFundInfoItem {
+  fundCode: string;
+  date: string;
+  value: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface TefasFundInfoResponse {
+  data?: TefasFundInfoItem[];
+  success?: boolean;
+  message?: string;
+}
+
+interface PendingFundRow {
+  row: BalanceRow;
+  normalizedCode: string;
+}
+
 /**
  * USD/TRY kurunu çeker
  */
@@ -97,64 +115,12 @@ function getDetailedErrorMessage(error: unknown, fallbackMessage: string) {
   return fallbackMessage;
 }
 
-function normalizeText(value: string) {
-  return value.replace(/\s+/g, ' ').trim();
+function normalizeCode(value: string) {
+  return value.trim().toUpperCase();
 }
 
-function parseLocalizedNumber(value: string): number | null {
-  const sanitized = value.replace(/[^\d,.-]/g, '').trim();
-  if (!sanitized) {
-    return null;
-  }
-
-  const normalized = sanitized.includes(',')
-    ? sanitized.replace(/\./g, '').replace(',', '.')
-    : sanitized;
-
-  const parsed = Number.parseFloat(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-
-// FVT fon detay sayfasından fiyatı çeker
-async function fetchFvtPrice(code: string): Promise<number> {
-  try {
-    const normalizedCode = code.trim().toUpperCase();
-    const url = `https://fvt.com.tr/fonlar/yatirim-fonlari/${normalizedCode}`;
-    console.log(`    → FVT URL: ${url}`);
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-      },
-    });
-    const html = response.data;
-    const $ = cheerio.load(html);
-    // Fiyatı bul: ₺ ile başlayan ilk değer
-    let price: number | null = null;
-    const priceMatch = html.match(/₺\s*([0-9][0-9.,]*)/);
-    if (priceMatch) {
-      price = parseLocalizedNumber(priceMatch[1]);
-    } else {
-      // Alternatif: sayfa içindeki <a> veya <div> metinlerinde ara
-      $('*').each((_, el) => {
-        const text = $(el).text();
-        const m = text.match(/₺\s*([0-9][0-9.,]*)/);
-        if (m) {
-          price = parseLocalizedNumber(m[1]);
-          return false;
-        }
-      });
-    }
-    if (price === null) {
-      throw new Error(`FVT fiyatı bulunamadı: ${code}`);
-    }
-    return price;
-  } catch (error) {
-    const errorMessage = getDetailedErrorMessage(error, `FVT scraping hatası: ${code}`);
-    throw new Error(errorMessage);
-  }
+function formatDateOnly(date: Date) {
+  return date.toISOString().split('T')[0];
 }
 
 async function fetchUsdTryRate(): Promise<UsdTryRateResult> {
@@ -182,9 +148,74 @@ async function fetchUsdTryRate(): Promise<UsdTryRateResult> {
   }
 }
 
+/**
+ * TEFAS API üzerinden fon fiyatlarını toplu olarak çeker
+ */
+async function fetchTefasFundPrices(codes: string[], date: string): Promise<Map<string, number>> {
+  const apiKey = process.env.TEFAS_RAPIDAPI_KEY ?? process.env.RAPIDAPI_KEY;
+  const apiHost = process.env.TEFAS_RAPIDAPI_HOST ?? 'tefas-api.p.rapidapi.com';
 
+  if (!apiKey) {
+    throw new Error('TEFAS_RAPIDAPI_KEY tanımlı değil');
+  }
 
+  const uniqueCodes = Array.from(new Set(codes.map(normalizeCode).filter(Boolean)));
+  const prices = new Map<string, number>();
 
+  if (uniqueCodes.length === 0) {
+    return prices;
+  }
+
+  try {
+    for (let index = 0; index < uniqueCodes.length; index += 50) {
+      const batch = uniqueCodes.slice(index, index + 50);
+      const query = new URLSearchParams({
+        offset: '0',
+        limit: String(batch.length),
+        fundCodes: batch.join(','),
+        page: '1',
+        date,
+        sortBy: 'value',
+        sortOrder: 'asc'
+      });
+      const url = `https://${apiHost}/api/v1/fund-info/by-date?${query.toString()}`;
+
+      console.log(`    → TEFAS URL: ${url}`);
+
+      const response = await axios.get<TefasFundInfoResponse>(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0',
+          'x-rapidapi-host': apiHost,
+          'x-rapidapi-key': apiKey,
+        },
+      });
+
+      if (!response.data?.success || !Array.isArray(response.data.data)) {
+        throw new Error(response.data?.message || 'TEFAS API geçersiz yanıt döndürdü');
+      }
+
+      console.log(`    → TEFAS batch sonucu: ${response.data.data.length} kayıt`);
+
+      for (const item of response.data.data) {
+        const code = typeof item.fundCode === 'string' ? normalizeCode(item.fundCode) : '';
+        const value = Number(item.value);
+
+        if (code && Number.isFinite(value) && value > 0) {
+          prices.set(code, value);
+        }
+      }
+    }
+
+    console.log(`    → Parse edilen TEFAS fon fiyatı sayısı: ${prices.size}`);
+
+    return prices;
+  } catch (error) {
+    const errorMessage = getDetailedErrorMessage(error, 'TEFAS fon fiyatları alınamadı');
+    console.error(`    ✗ TEFAS fon fiyatı hatası: ${errorMessage}`);
+    throw new Error(errorMessage);
+  }
+}
 
 /**
  * Borsa Istanbul (BIST) hisse fiyatlarını çeker
@@ -339,6 +370,73 @@ function pushPriceUpdateError(
   });
 }
 
+function pushFailedPriceUpdate(
+  results: PriceUpdateResult[],
+  errors: PriceUpdateErrorItem[],
+  row: BalanceRow,
+  message: string
+) {
+  results.push({
+    symbol: row.name,
+    code: row.code ?? 'N/A',
+    success: false,
+    error: message
+  });
+
+  pushPriceUpdateError(errors, row.name, row.code, message);
+}
+
+function pushSuccessfulPriceUpdate(
+  results: PriceUpdateResult[],
+  row: BalanceRow,
+  oldPrice: number | undefined,
+  newPrice: number
+) {
+  results.push({
+    symbol: row.name,
+    code: row.code ?? 'N/A',
+    oldPrice,
+    newPrice,
+    success: true
+  });
+}
+
+async function upsertDailyPrice(row: BalanceRow, priceToSave: number, today: Date) {
+  const lastTransaction = await prisma.transaction.findFirst({
+    where: { symbolId: row.id },
+    orderBy: { date: 'desc' }
+  });
+
+  console.log('  💾 Veritabanına kaydediliyor...');
+  console.log(`  📅 Kayıt Tarihi: ${formatDateOnly(today)}`);
+
+  if (lastTransaction?.price) {
+    const change = parseFloat((((priceToSave - lastTransaction.price) / lastTransaction.price * 100).toFixed(2)));
+    console.log(`  Son Fiyat: ${lastTransaction.price.toFixed(4)} USD → Yeni Fiyat: ${priceToSave.toFixed(4)} USD (${change > 0 ? '+' : ''}${change.toFixed(2)}%)`);
+  }
+
+  await prisma.price.upsert({
+    where: {
+      symbolId_date: {
+        symbolId: row.id,
+        date: today
+      }
+    },
+    update: {
+      price: priceToSave
+    },
+    create: {
+      symbolId: row.id,
+      date: today,
+      price: priceToSave
+    }
+  });
+
+  console.log('  ✅ Başarıyla kaydedildi');
+
+  return lastTransaction?.price;
+}
+
 async function savePortfolioSnapshot() {
   try {
     console.log('\n=== Portföy Değeri Hesaplanıyor ===');
@@ -378,6 +476,9 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
   console.log('=== Fiyat Güncelleme İşlemi Başladı ===');
   console.log('Tarih:', new Date().toISOString());
 
+  const today = getUtcDateOnly();
+  const priceDate = formatDateOnly(today);
+
   const { rate: usdTryRate, errorMessage: usdTryErrorMessage } = await fetchUsdTryRate();
   if (!usdTryRate) {
     console.warn(`⚠️ ${usdTryErrorMessage || 'USD/TRY kuru alınamadı. TRY bazlı varlıklar atlanacak.'}`);
@@ -409,34 +510,40 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
     };
   }
 
-
-
   const results: PriceUpdateResult[] = [];
   const errors: PriceUpdateErrorItem[] = [];
+  const pendingFundRows: PendingFundRow[] = [];
+  let processedCount = 0;
 
   for (let i = 0; i < balanceData.length; i++) {
     const row = balanceData[i];
     console.log(`\n[${i + 1}/${balanceData.length}] İşleniyor: ${row.name} (${row.code || 'KOD YOK'})`);
+    let deferredFundProcessing = false;
 
     try {
       if (!row.code) {
         const errorMessage = 'Kod bilgisi eksik';
         console.error(`❌ ${row.name}: ${errorMessage}`);
-        results.push({
-          symbol: row.name,
-          code: 'N/A',
-          success: false,
-          error: errorMessage
-        });
-        pushPriceUpdateError(errors, row.name, row.code, errorMessage);
+        pushFailedPriceUpdate(results, errors, row, errorMessage);
         continue;
       }
 
       let newPrice: number | null = null;
       let requiresUsdConversion = false;
       const marketCategory = row.market_category ?? 'F';
+      const isFundLikeMarket = marketCategory !== 'B' && marketCategory !== 'K' && marketCategory !== 'E';
 
       console.log(`  Market Category: ${row.market_category || 'Belirtilmemiş'}`);
+
+      if (isFundLikeMarket) {
+        deferredFundProcessing = true;
+        pendingFundRows.push({
+          row,
+          normalizedCode: normalizeCode(row.code)
+        });
+        console.log('  → Fon işleme listesine eklendi; TEFAS toplu çağrısından sonra kaydedilecek.');
+        continue;
+      }
 
       if (marketCategory === 'B') {
         requiresUsdConversion = true;
@@ -453,23 +560,11 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
           console.log('  → BTCTURK API kullanılıyor...');
           newPrice = await fetchCryptoPrice(row.code);
         }
-      } else if (marketCategory === 'F') {
-        requiresUsdConversion = true;
-        if (!usdTryRate) {
-          throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için FVT fon fiyatı kaydedilemedi');
-        }
-        console.log('  → FVT fon sayfası kullanılıyor...');
-        newPrice = await fetchFvtPrice(row.code);
       } else if (marketCategory === 'E') {
         console.log('  → YAHOO API kullanılıyor...');
         newPrice = await fetchYAHOOPrice(row.code);
       } else {
-        requiresUsdConversion = true;
-        if (!usdTryRate) {
-          throw new Error(usdTryErrorMessage || 'USD/TRY kuru alınamadığı için varsayılan kaynak fiyatı kaydedilemedi');
-        }
-        console.log('  → Varsayılan: FVT fon sayfası kullanılıyor...');
-        newPrice = await fetchFvtPrice(row.code);
+        throw new Error(`Desteklenmeyen market category: ${marketCategory}`);
       }
 
       console.log(`  API Sonucu: ${newPrice !== null ? newPrice.toFixed(4) : 'BAŞARISIZ'}`);
@@ -483,70 +578,81 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
         } else if (marketCategory === 'K') {
           console.log(`  💵 Kripto zaten USD cinsinden: ${priceToSave.toFixed(4)} USD`);
         }
-
-        const lastTransaction = await prisma.transaction.findFirst({
-          where: { symbolId: row.id },
-          orderBy: { date: 'desc' }
-        });
-
-        const today = getUtcDateOnly();
-
-        console.log('  💾 Veritabanına kaydediliyor...');
-        console.log(`  📅 Kayıt Tarihi: ${today.toISOString().split('T')[0]}`);
-        if (lastTransaction?.price) {
-          const change = parseFloat((((priceToSave - lastTransaction.price) / lastTransaction.price * 100).toFixed(2)));
-          console.log(`  Son Fiyat: ${lastTransaction.price.toFixed(4)} USD → Yeni Fiyat: ${priceToSave.toFixed(4)} USD (${change > 0 ? '+' : ''}${change.toFixed(2)}%)`);
-        }
-
-        await prisma.price.upsert({
-          where: {
-            symbolId_date: {
-              symbolId: row.id,
-              date: today
-            }
-          },
-          update: {
-            price: priceToSave
-          },
-          create: {
-            symbolId: row.id,
-            date: today,
-            price: priceToSave
-          }
-        });
-
-        console.log('  ✅ Başarıyla kaydedildi');
-
-        results.push({
-          symbol: row.name,
-          code: row.code,
-          oldPrice: lastTransaction?.price,
-          newPrice: priceToSave,
-          success: true
-        });
+        const oldPrice = await upsertDailyPrice(row, priceToSave, today);
+        pushSuccessfulPriceUpdate(results, row, oldPrice, priceToSave);
       } else {
         const errorMessage = `${row.code} için fiyat bilgisi boş döndü`;
         console.error(`  ❌ ${errorMessage}`);
-        results.push({
-          symbol: row.name,
-          code: row.code,
-          success: false,
-          error: errorMessage
-        });
-        pushPriceUpdateError(errors, row.name, row.code, errorMessage);
+        pushFailedPriceUpdate(results, errors, row, errorMessage);
       }
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       console.error(`  ❌ ${row.name} işlenirken hata oluştu:`, error);
-      results.push({
-        symbol: row.name,
-        code: row.code ?? 'N/A',
-        success: false,
-        error: errorMessage
-      });
-      pushPriceUpdateError(errors, row.name, row.code, errorMessage);
+      pushFailedPriceUpdate(results, errors, row, errorMessage);
     } finally {
-      onEvent?.({ type: 'progress', processed: i + 1, total });
+      if (!deferredFundProcessing) {
+        processedCount += 1;
+        onEvent?.({ type: 'progress', processed: processedCount, total });
+      }
+    }
+  }
+
+  if (pendingFundRows.length > 0) {
+    console.log(`\n=== TEFAS Fon Fiyatları İşleniyor (${pendingFundRows.length}) ===`);
+
+    if (!usdTryRate) {
+      const errorMessage = usdTryErrorMessage || 'USD/TRY kuru alınamadığı için TEFAS fon fiyatları kaydedilemedi';
+      console.error(`⚠️ ${errorMessage}`);
+
+      for (const pendingFund of pendingFundRows) {
+        pushFailedPriceUpdate(results, errors, pendingFund.row, errorMessage);
+        processedCount += 1;
+        onEvent?.({ type: 'progress', processed: processedCount, total });
+      }
+    } else {
+      try {
+        const tefasFundPrices = await fetchTefasFundPrices(
+          pendingFundRows.map((pendingFund) => pendingFund.normalizedCode),
+          priceDate
+        );
+
+        for (const pendingFund of pendingFundRows) {
+          const { row, normalizedCode } = pendingFund;
+          console.log(`\n[FON] İşleniyor: ${row.name} (${row.code || 'KOD YOK'})`);
+
+          try {
+            const tefasPrice = tefasFundPrices.get(normalizedCode);
+
+            if (!tefasPrice || tefasPrice <= 0) {
+              throw new Error(`TEFAS yanıtında fon fiyatı bulunamadı: ${row.code}`);
+            }
+
+            console.log(`  TEFAS Sonucu: ${tefasPrice.toFixed(6)} TRY`);
+
+            const priceToSave = tefasPrice / usdTryRate;
+            console.log(`  💱 TRY → USD dönüşümü: ${tefasPrice.toFixed(6)} TRY = ${priceToSave.toFixed(6)} USD`);
+
+            const oldPrice = await upsertDailyPrice(row, priceToSave, today);
+            pushSuccessfulPriceUpdate(results, row, oldPrice, priceToSave);
+          } catch (error) {
+            const errorMessage = getErrorMessage(error);
+            console.error(`  ❌ ${row.name} fonu işlenirken hata oluştu:`, error);
+            pushFailedPriceUpdate(results, errors, row, errorMessage);
+          } finally {
+            processedCount += 1;
+            onEvent?.({ type: 'progress', processed: processedCount, total });
+          }
+        }
+      } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        console.error(`⚠️ TEFAS fon fiyatları alınamadı: ${errorMessage}`);
+
+        for (const pendingFund of pendingFundRows) {
+          pushFailedPriceUpdate(results, errors, pendingFund.row, errorMessage);
+          processedCount += 1;
+          onEvent?.({ type: 'progress', processed: processedCount, total });
+        }
+      }
     }
   }
 
@@ -576,7 +682,7 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
 
   return {
     total: results.length,
-    processed: results.length,
+    processed: processedCount,
     successCount,
     failCount,
     message: `${successCount} / ${results.length} fiyat başarıyla güncellendi`,
