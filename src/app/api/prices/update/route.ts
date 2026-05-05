@@ -353,6 +353,28 @@ function getUtcDateOnly(date = new Date()) {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 }
 
+async function handleFundFallback(row: BalanceRow, today: Date, results: PriceUpdateResult[], errors: PriceUpdateErrorItem[], errorMessage: string) {
+  try {
+    const lastPriceRecord = await prisma.price.findFirst({
+      where: { symbolId: row.id, date: { lt: today } },
+      orderBy: { date: 'desc' }
+    });
+
+    if (lastPriceRecord && lastPriceRecord.price > 0) {
+      console.log(`  ⚠️ API hatası veya fiyat bulunamadı. Son bilinen fiyat kullanılıyor (${formatDateOnly(lastPriceRecord.date as Date)}): ${lastPriceRecord.price.toFixed(6)} USD`);
+      const oldPrice = await upsertDailyPrice(row, lastPriceRecord.price, today);
+      pushSuccessfulPriceUpdate(results, row, oldPrice, lastPriceRecord.price);
+    } else {
+      console.error(`  ❌ ${row.name} fonu işlenirken hata oluştu ve geçmiş fiyat bulunamadı: ${errorMessage}`);
+      pushFailedPriceUpdate(results, errors, row, errorMessage);
+    }
+  } catch (fallbackError) {
+    const fallbackErrorMessage = getErrorMessage(fallbackError);
+    console.error(`  ❌ ${row.name} fonu için geçmiş fiyat kullanma işlemi başarısız oldu: ${fallbackErrorMessage}`);
+    pushFailedPriceUpdate(results, errors, row, `${errorMessage} (Geçmiş fiyat alınamadı: ${fallbackErrorMessage})`);
+  }
+}
+
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Bilinmeyen hata';
 }
@@ -636,8 +658,7 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
             pushSuccessfulPriceUpdate(results, row, oldPrice, priceToSave);
           } catch (error) {
             const errorMessage = getErrorMessage(error);
-            console.error(`  ❌ ${row.name} fonu işlenirken hata oluştu:`, error);
-            pushFailedPriceUpdate(results, errors, row, errorMessage);
+            await handleFundFallback(row, today, results, errors, errorMessage);
           } finally {
             processedCount += 1;
             onEvent?.({ type: 'progress', processed: processedCount, total });
@@ -645,10 +666,12 @@ async function runPriceUpdate(onEvent?: (event: PriceUpdateEvent) => void): Prom
         }
       } catch (error) {
         const errorMessage = getErrorMessage(error);
-        console.error(`⚠️ TEFAS fon fiyatları alınamadı: ${errorMessage}`);
+        console.error(`⚠️ TEFAS fon fiyatları alınamadı, son bilinen fiyatlar kullanılacak: ${errorMessage}`);
 
         for (const pendingFund of pendingFundRows) {
-          pushFailedPriceUpdate(results, errors, pendingFund.row, errorMessage);
+          const { row } = pendingFund;
+          console.log(`\n[FON] İşleniyor (Eski Fiyat): ${row.name} (${row.code || 'KOD YOK'})`);
+          await handleFundFallback(row, today, results, errors, errorMessage);
           processedCount += 1;
           onEvent?.({ type: 'progress', processed: processedCount, total });
         }
