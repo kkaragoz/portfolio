@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import axios from 'axios';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,17 +96,6 @@ function stringifyErrorPayload(payload: unknown, maxLength = 300): string | null
 }
 
 function getDetailedErrorMessage(error: unknown, fallbackMessage: string) {
-  if (axios.isAxiosError(error)) {
-    const responseText = stringifyErrorPayload(error.response?.data);
-    const parts = [
-      error.message,
-      error.response?.status ? `Status: ${error.response.status}` : null,
-      responseText ? `Response: ${responseText}` : null,
-    ].filter((part): part is string => Boolean(part));
-
-    return parts.length > 0 ? parts.join(' | ') : fallbackMessage;
-  }
-
   if (error instanceof Error && error.message) {
     return error.message;
   }
@@ -126,10 +114,16 @@ function formatDateOnly(date: Date) {
 async function fetchUsdTryRate(): Promise<UsdTryRateResult> {
   try {
     console.log('    → USD/TRY kuru alınıyor...');
-    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+    const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
     
-    if (response.data?.rates?.TRY) {
-      const rate = parseFloat(response.data.rates.TRY);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data?.rates?.TRY) {
+      const rate = parseFloat(data.rates.TRY);
       console.log(`    → USD/TRY: ${rate.toFixed(4)}`);
       return { rate };
     }
@@ -182,7 +176,7 @@ async function fetchTefasFundPrices(codes: string[], date: string): Promise<Map<
 
       console.log(`    → TEFAS URL: ${url}`);
 
-      const response = await axios.get<TefasFundInfoResponse>(url, {
+      const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': 'Mozilla/5.0',
@@ -190,14 +184,20 @@ async function fetchTefasFundPrices(codes: string[], date: string): Promise<Map<
           'x-rapidapi-key': apiKey,
         },
       });
-
-      if (!response.data?.success || !Array.isArray(response.data.data)) {
-        throw new Error(response.data?.message || 'TEFAS API geçersiz yanıt döndürdü');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log(`    → TEFAS batch sonucu: ${response.data.data.length} kayıt`);
+      const data = await response.json() as TefasFundInfoResponse;
 
-      for (const item of response.data.data) {
+      if (!data?.success || !Array.isArray(data.data)) {
+        throw new Error(data?.message || 'TEFAS API geçersiz yanıt döndürdü');
+      }
+
+      console.log(`    → TEFAS batch sonucu: ${data.data.length} kayıt`);
+
+      for (const item of data.data) {
         const code = typeof item.fundCode === 'string' ? normalizeCode(item.fundCode) : '';
         const value = Number(item.value);
 
@@ -233,13 +233,17 @@ async function fetchBISTPrice(code: string): Promise<number> {
     
     console.log(`    → BIST URL: ${url}`);
     
-    const response = await axios.get(url, {
+    const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
       },
     });
 
-    const data = response.data;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
     
     if (data?.chart?.result?.[0]?.meta?.regularMarketPrice) {
       const price = parseFloat(data.chart.result[0].meta.regularMarketPrice);
@@ -269,17 +273,22 @@ async function fetchCryptoPrice(code: string): Promise<number> {
     const url = `https://api.btcturk.com/api/v2/ticker?pairSymbol=${code}`;
     console.log(`    → URL: ${url}`);
     
-    const response = await axios.get(url, {
+    const response = await fetch(url, {
       headers: { 
         'User-Agent': 'Mozilla/5.0'
       }
     });
 
-    console.log(`    → API Response:`, JSON.stringify(response.data, null, 2));
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`    → API Response:`, JSON.stringify(data, null, 2));
     
     // Response yapısı: { data: [...], success: true, message: null, code: 0 }
-    if (response.data?.success && response.data?.data && response.data.data.length > 0) {
-      const ticker = response.data.data[0];
+    if (data?.success && data?.data && data.data.length > 0) {
+      const ticker = data.data[0];
       const price = parseFloat(ticker.last); // Son işlem fiyatı
       
       console.log(`    → Pair: ${ticker.pair}`);
@@ -295,7 +304,7 @@ async function fetchCryptoPrice(code: string): Promise<number> {
       
       return price;
     } else {
-      const errorMessage = `BTCTURK API'den geçersiz yanıt. Success: ${response.data?.success}, Data length: ${response.data?.data?.length || 0}, Message: ${response.data?.message ?? 'Yok'}`;
+      const errorMessage = `BTCTURK API'den geçersiz yanıt.`;
       console.error(`    ✗ ${errorMessage}`);
       throw new Error(errorMessage);
     }
@@ -323,13 +332,17 @@ async function fetchYAHOOPrice(code: string): Promise<number> {
     
     console.log(`    → YAHOO URL: ${url}`);
     
-    const response = await axios.get(url, {
+    const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
       },
     });
 
-    const data = response.data;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
     
     if (data?.chart?.result?.[0]?.meta?.regularMarketPrice) {
       const price = parseFloat(data.chart.result[0].meta.regularMarketPrice);
