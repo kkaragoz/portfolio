@@ -328,6 +328,9 @@ export default function Home() {
   const profitLossPct = portfolioSummary.portfolio_cost > 0
     ? (profitLoss / portfolioSummary.portfolio_cost) * 100
     : 0;
+  const portfolioValueTry = marketRates.usdTry !== null
+    ? portfolioSummary.portfolio_value * marketRates.usdTry
+    : null;
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -422,7 +425,7 @@ export default function Home() {
       </div>
 
       {/* Portfolio Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -461,6 +464,28 @@ export default function Home() {
             )}
           </p>
           <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>Portföy güncel piyasa değeri</p>
+        </div>
+
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#28c76f' }}>Portföy</p>
+              <h3 className="text-lg font-bold mt-1" style={{ color: 'var(--text-heading)' }}>Piyasa Değeri (TL)</h3>
+            </div>
+            <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: 'var(--success-soft)' }}>
+              <DollarSign className="w-5 h-5" style={{ color: '#28c76f' }} />
+            </div>
+          </div>
+          <p className="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>
+            {portfolioLoading || marketRatesLoading ? (
+              <span className="animate-pulse" style={{ color: 'var(--text-muted)' }}>...</span>
+            ) : portfolioValueTry !== null ? (
+              `₺${portfolioValueTry.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            ) : (
+              <span className="text-lg" style={{ color: 'var(--text-muted)' }}>Veri yok</span>
+            )}
+          </p>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>USD/TRY kuru ile hesaplanan piyasa değeri</p>
         </div>
 
         <div className="card p-5">
