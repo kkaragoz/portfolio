@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Treemap, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { X, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
+import { X, ExternalLink } from 'lucide-react';
 
 interface GridData {  
   code: string | null;
@@ -28,14 +28,8 @@ interface PricePoint {
   price: number;
 }
 
-interface PerformanceData {
-  latest: number | null;
-  day1: number | null;
-  day5: number | null;
-  month1: number | null;
-  month3: number | null;
-  change_latest: number | null;
-}
+type GridSortField = 'code' | 'balance' | 'average_cost' | 'current_price' | 'total_cost' | 'market_value' | 'profit_loss' | 'profit_loss_pct' | 'day1' | 'day5' | 'month1' | 'month3';
+type SortDirection = 'asc' | 'desc';
 
 interface PerformanceGridItem {
   code: string;
@@ -47,9 +41,6 @@ interface PerformanceGridItem {
   month1: number | null;
   month3: number | null;
 }
-
-type SortField = 'code' | 'latest' | 'day1' | 'day5' | 'month1' | 'month3';
-type SortDirection = 'asc' | 'desc';
 
 interface CategoryData {
   category: string;
@@ -85,13 +76,12 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<'USD' | 'TRY'>('USD');
   const [usdTry, setUsdTry] = useState<number | null>(null);
-  const [selectedSymbol, setSelectedSymbol] = useState<{ code: string; name: string; symbolId: number; url: string | null } | null>(null);
-  const [performanceData, setPerformanceData] = useState<PerformanceData | null>(null);
-  const [loadingPerformance, setLoadingPerformance] = useState(false);
+  const [selectedSymbol, setSelectedSymbol] = useState<{ code: string; name: string; symbolId: number; url: string | null; note: string | null } | null>(null);
+  const [loadingSymbolDetail, setLoadingSymbolDetail] = useState(false);
+  const [gridSortField, setGridSortField] = useState<GridSortField>('code');
+  const [gridSortDirection, setGridSortDirection] = useState<SortDirection>('asc');
   const [performanceGrid, setPerformanceGrid] = useState<PerformanceGridItem[]>([]);
   const [loadingPerformanceGrid, setLoadingPerformanceGrid] = useState(false);
-  const [sortField, setSortField] = useState<SortField>('code');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [symbolList, setSymbolList] = useState<SymbolOption[]>([]);
   const [chartSymbolId, setChartSymbolId] = useState<number | null>(null);
   const [priceChartData, setPriceChartData] = useState<PricePoint[]>([]);
@@ -164,20 +154,7 @@ export default function ReportsPage() {
     fetchRates();
   }, []);
 
-  // Performans verilerini çek
-  const fetchPerformance = async (symbolId: number) => {
-    setLoadingPerformance(true);
-    try {
-      const res = await fetch(`/api/symbols/${symbolId}/performance`);
-      const data = await res.json();
-      setPerformanceData(data);
-    } catch (e) {
-      console.error('Performans verileri alınamadı:', e);
-      setPerformanceData(null);
-    } finally {
-      setLoadingPerformance(false);
-    }
-  };
+
 
   // Tüm semboller için performans verilerini çek
   useEffect(() => {
@@ -190,7 +167,7 @@ export default function ReportsPage() {
         .map(async (item) => {
           try {
             const res = await fetch(`/api/symbols/${item.symbol_id}/performance`);
-            const data: PerformanceData = await res.json();
+            const data = await res.json();
             return {
               code: item.code || '',
               name: item.name || '',
@@ -217,48 +194,30 @@ export default function ReportsPage() {
 
   const handleRowClick = async (item: GridData) => {
     if (item.symbol_id) {
-      let symbolUrl: string | null = null;
+      setSelectedSymbol({ code: item.code || '', name: item.name || '', symbolId: item.symbol_id, url: null, note: null });
+      setLoadingSymbolDetail(true);
       try {
         const res = await fetch(`/api/symbols/${item.symbol_id}`);
         if (res.ok) {
           const symbolData = await res.json();
-          symbolUrl = symbolData.url || null;
+          setSelectedSymbol({ code: item.code || '', name: item.name || '', symbolId: item.symbol_id, url: symbolData.url || null, note: symbolData.note || null });
         }
       } catch (e) {
         // ignore
+      } finally {
+        setLoadingSymbolDetail(false);
       }
-      setSelectedSymbol({ code: item.code || '', name: item.name || '', symbolId: item.symbol_id, url: symbolUrl });
-      await fetchPerformance(item.symbol_id);
     }
   };
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+  const handleGridSort = (field: GridSortField) => {
+    if (gridSortField === field) {
+      setGridSortDirection(gridSortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
-      setSortDirection('desc');
+      setGridSortField(field);
+      setGridSortDirection(field === 'code' ? 'asc' : 'desc');
     }
   };
-
-  const sortedPerformanceGrid = [...performanceGrid].sort((a, b) => {
-    const aValue = a[sortField];
-    const bValue = b[sortField];
-    
-    if (aValue === null && bValue === null) return 0;
-    if (aValue === null) return 1;
-    if (bValue === null) return -1;
-    
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return sortDirection === 'asc' 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
-    }
-    
-    return sortDirection === 'asc' 
-      ? (aValue as number) - (bValue as number)
-      : (bValue as number) - (aValue as number);
-  });
 
   const formatPercentage = (value: number | null) => {
     if (value === null) return '-';
@@ -385,18 +344,60 @@ const formatCurrency2Digits = (value: number) => {
             <table className="min-w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--bg-table-head)' }}>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Kod</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Bakiye</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Ort. Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Güncel Fiyat {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Toplam Maliyet {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Piyasa Değeri {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Kar/Zarar {currency === 'TRY' ? '(TL)' : '(USD)'}</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Kar/Zarar %</th>
+                  {([
+                    { field: 'code' as GridSortField, label: 'Kod', align: 'text-left' },
+                    { field: 'balance' as GridSortField, label: 'Bakiye', align: 'text-right' },
+                    { field: 'average_cost' as GridSortField, label: `Ort. Maliyet ${currency === 'TRY' ? '(TL)' : '(USD)'}`, align: 'text-right' },
+                    { field: 'current_price' as GridSortField, label: `Güncel Fiyat ${currency === 'TRY' ? '(TL)' : '(USD)'}`, align: 'text-right' },
+                    { field: 'total_cost' as GridSortField, label: `Toplam Maliyet ${currency === 'TRY' ? '(TL)' : '(USD)'}`, align: 'text-right' },
+                    { field: 'market_value' as GridSortField, label: `Piyasa Değeri ${currency === 'TRY' ? '(TL)' : '(USD)'}`, align: 'text-right' },
+                    { field: 'profit_loss' as GridSortField, label: `Kar/Zarar ${currency === 'TRY' ? '(TL)' : '(USD)'}`, align: 'text-right' },
+                    { field: 'profit_loss_pct' as GridSortField, label: 'Kar/Zarar %', align: 'text-right' },
+                    { field: 'day1' as GridSortField, label: '1 Gün', align: 'text-right' },
+                    { field: 'day5' as GridSortField, label: '5 Gün', align: 'text-right' },
+                    { field: 'month1' as GridSortField, label: '1 Ay', align: 'text-right' },
+                    { field: 'month3' as GridSortField, label: '3 Ay', align: 'text-right' },
+                  ]).map(col => (
+                    <th
+                      key={col.field}
+                      className={`px-4 py-3 ${col.align} text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors`}
+                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
+                      onClick={() => handleGridSort(col.field)}
+                    >
+                      <div className={`flex items-center gap-1 ${col.align === 'text-right' ? 'justify-end' : ''}`}>
+                        {col.label}
+                        {gridSortField === col.field && (<span className="text-[10px]">{gridSortDirection === 'asc' ? '▲' : '▼'}</span>)}
+                      </div>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {[...gridData].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => {                  
+                {[...gridData].map(item => ({
+                  ...item,
+                  _perf: performanceGrid.find(p => p.symbolId === item.symbol_id)
+                })).sort((a, b) => {
+                  const perfFields = ['day1', 'day5', 'month1', 'month3'] as const;
+                  let aVal: any, bVal: any;
+                  if (perfFields.includes(gridSortField as any)) {
+                    aVal = a._perf?.[gridSortField as 'day1' | 'day5' | 'month1' | 'month3'] ?? null;
+                    bVal = b._perf?.[gridSortField as 'day1' | 'day5' | 'month1' | 'month3'] ?? null;
+                  } else if (gridSortField === 'code') {
+                    aVal = a.code || '';
+                    bVal = b.code || '';
+                  } else {
+                    aVal = a[gridSortField as keyof GridData] ?? null;
+                    bVal = b[gridSortField as keyof GridData] ?? null;
+                  }
+                  if (aVal === null && bVal === null) return 0;
+                  if (aVal === null) return 1;
+                  if (bVal === null) return -1;
+                  if (typeof aVal === 'string' && typeof bVal === 'string') {
+                    return gridSortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                  }
+                  return gridSortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+                }).map((item) => {
+                  const perf = item._perf;
                   return (
                   <tr 
                     key={item.code} 
@@ -419,6 +420,18 @@ const formatCurrency2Digits = (value: number) => {
   <td className="px-4 py-3 text-right font-semibold" style={{ color: (item.profit_loss_pct ?? 0) >= 0 ? 'var(--success)' : 'var(--danger)' }}>
     {(item.profit_loss_pct ?? 0) >= 0 ? '+' : ''}
     {(item.profit_loss_pct ?? 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
+  </td>
+  <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(perf?.day1 ?? null)}>
+    {loadingPerformanceGrid ? '...' : formatPercentage(perf?.day1 ?? null)}
+  </td>
+  <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(perf?.day5 ?? null)}>
+    {loadingPerformanceGrid ? '...' : formatPercentage(perf?.day5 ?? null)}
+  </td>
+  <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(perf?.month1 ?? null)}>
+    {loadingPerformanceGrid ? '...' : formatPercentage(perf?.month1 ?? null)}
+  </td>
+  <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(perf?.month3 ?? null)}>
+    {loadingPerformanceGrid ? '...' : formatPercentage(perf?.month3 ?? null)}
   </td>
 </tr>
                   );
@@ -543,116 +556,6 @@ const formatCurrency2Digits = (value: number) => {
               )}
             </div>
           </div>
-        </div>
-
-        {/* 6. Performans Raporu */}
-        <div className="card p-5">
-          <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Performans Raporu</h2>
-          {loadingPerformanceGrid ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--accent)' }}></div>
-              <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>Performans verileri yükleniyor...</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr style={{ background: 'var(--bg-table-head)' }}>
-                    <th 
-                      className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
-                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
-                      onClick={() => handleSort('code')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Kod
-                        {sortField === 'code' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
-                      </div>
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}>Ad</th>
-                    <th 
-                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
-                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
-                      onClick={() => handleSort('latest')}
-                    >
-                      <div className="flex items-center justify-end gap-2">
-                        Güncel Fiyat
-                        {sortField === 'latest' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
-                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
-                      onClick={() => handleSort('day1')}
-                    >
-                      <div className="flex items-center justify-end gap-2">
-                        1 Gün
-                        {sortField === 'day1' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
-                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
-                      onClick={() => handleSort('day5')}
-                    >
-                      <div className="flex items-center justify-end gap-2">
-                        5 Gün
-                        {sortField === 'day5' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
-                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
-                      onClick={() => handleSort('month1')}
-                    >
-                      <div className="flex items-center justify-end gap-2">
-                        1 Ay
-                        {sortField === 'month1' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors"
-                      style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)' }}
-                      onClick={() => handleSort('month3')}
-                    >
-                      <div className="flex items-center justify-end gap-2">
-                        3 Ay
-                        {sortField === 'month3' && (<span>{sortDirection === 'asc' ? '↑' : '↓'}</span>)}
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedPerformanceGrid.map((item) => (
-                    <tr 
-                      key={item.symbolId}
-                      className="transition-colors"
-                      style={{ borderBottom: '1px solid var(--border-light)' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                    >
-                      <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-heading)' }}>{item.code}</td>
-                      <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{item.name}</td>
-                      <td className="px-4 py-3 text-right" style={{ color: 'var(--text-secondary)' }}>
-                        {item.latest !== null ? `$${item.latest.toFixed(2)}` : '-'}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(item.day1)}>
-                        {formatPercentage(item.day1)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(item.day5)}>
-                        {formatPercentage(item.day5)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(item.month1)}>
-                        {formatPercentage(item.month1)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold" style={getColorStyle(item.month3)}>
-                        {formatPercentage(item.month3)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
 
         {/* 6. Portföy Değeri Grafiği */}
@@ -805,86 +708,17 @@ const formatCurrency2Digits = (value: number) => {
 
             {/* Content */}
             <div className="p-5">
-              {loadingPerformance ? (
+              {loadingSymbolDetail ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--accent)' }}></div>
                   <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>Yükleniyor...</p>
                 </div>
-              ) : performanceData ? (
-                <div className="space-y-4">
-                  {/* Son Gün */}
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-input)' }}>
-                    <div className="flex items-center gap-2">
-                      {performanceData.day1 !== null && performanceData.day1 >= 0 ? (
-                        <TrendingUp className="w-5 h-5" style={{ color: 'var(--success)' }} />
-                      ) : (
-                        <TrendingDown className="w-5 h-5" style={{ color: 'var(--danger)' }} />
-                      )}
-                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Son Gün</span>
-                    </div>
-                    <span className="text-lg font-bold" style={getColorStyle(performanceData.day1)}>
-                      {formatPercentage(performanceData.day1)}
-                    </span>
-                  </div>
-
-                  {/* Son 5 Gün */}
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-input)' }}>
-                    <div className="flex items-center gap-2">
-                      {performanceData.day5 !== null && performanceData.day5 >= 0 ? (
-                        <TrendingUp className="w-5 h-5" style={{ color: 'var(--success)' }} />
-                      ) : (
-                        <TrendingDown className="w-5 h-5" style={{ color: 'var(--danger)' }} />
-                      )}
-                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Son 5 Gün</span>
-                    </div>
-                    <span className="text-lg font-bold" style={getColorStyle(performanceData.day5)}>
-                      {formatPercentage(performanceData.day5)}
-                    </span>
-                  </div>
-
-                  {/* Son 1 Ay */}
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-input)' }}>
-                    <div className="flex items-center gap-2">
-                      {performanceData.month1 !== null && performanceData.month1 >= 0 ? (
-                        <TrendingUp className="w-5 h-5" style={{ color: 'var(--success)' }} />
-                      ) : (
-                        <TrendingDown className="w-5 h-5" style={{ color: 'var(--danger)' }} />
-                      )}
-                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Son 1 Ay</span>
-                    </div>
-                    <span className="text-lg font-bold" style={getColorStyle(performanceData.month1)}>
-                      {formatPercentage(performanceData.month1)}
-                    </span>
-                  </div>
-
-                  {/* Son 3 Ay */}
-                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-input)' }}>
-                    <div className="flex items-center gap-2">
-                      {performanceData.month3 !== null && performanceData.month3 >= 0 ? (
-                        <TrendingUp className="w-5 h-5" style={{ color: 'var(--success)' }} />
-                      ) : (
-                        <TrendingDown className="w-5 h-5" style={{ color: 'var(--danger)' }} />
-                      )}
-                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Son 3 Ay</span>
-                    </div>
-                    <span className="text-lg font-bold" style={getColorStyle(performanceData.month3)}>
-                      {formatPercentage(performanceData.month3)}
-                    </span>
-                  </div>
-
-                  {/* Güncel Fiyat */}
-                  <div className="mt-6 pt-4" style={{ borderTop: '1px solid var(--border-color)' }}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Güncel Fiyat</span>
-                      <span className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>
-                        {performanceData.latest !== null ? `$${performanceData.latest.toFixed(2)}` : '-'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
               ) : (
-                <div className="text-center py-8">
-                  <p style={{ color: 'var(--text-muted)' }}>Performans verisi bulunamadı</p>
+                <div>
+                  <h4 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>Açıklama</h4>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
+                    {selectedSymbol.note || 'Açıklama bulunmamaktadır.'}
+                  </p>
                 </div>
               )}
             </div>
