@@ -54,7 +54,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>
-              FinanceApp
+              Portfolio
             </span>
           </div>
         )}
@@ -117,7 +117,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </button>
           {!collapsed && (
             <div className="text-center mt-1">
-              <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>v1.1.1</span>
+              <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>v1.5.1</span>
             </div>
           )}
         </div>
