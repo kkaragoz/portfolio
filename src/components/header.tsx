@@ -80,17 +80,7 @@ export default function Header({ onToggleSidebar, darkMode, onToggleDarkMode }: 
         s.code3?.toLowerCase().includes(q)
       );
       if (found) {
-        if (window.location.pathname !== '/symbols') {
-          try {
-            await router.push('/symbols');
-            setTimeout(() => window.dispatchEvent(new CustomEvent('openSymbol', { detail: found })), 200);
-          } catch (err) {
-            console.error('Navigation to /symbols failed', err);
-            window.dispatchEvent(new CustomEvent('openSymbol', { detail: found }));
-          }
-        } else {
-          window.dispatchEvent(new CustomEvent('openSymbol', { detail: found }));
-        }
+        router.push(`/symbol/${found.id}`);
       } else {
         Swal.fire({
           icon: 'warning',
@@ -106,16 +96,11 @@ export default function Header({ onToggleSidebar, darkMode, onToggleDarkMode }: 
     }
   };
 
-  const selectSuggestion = async (s: any) => {
+  const selectSuggestion = (s: any) => {
     setSearchQuery(s.name);
     setSuggestions([]);
     setShowSuggestions(false);
-    if (window.location.pathname !== '/symbols') {
-      await router.push('/symbols');
-      setTimeout(() => window.dispatchEvent(new CustomEvent('openSymbol', { detail: s })), 200);
-    } else {
-      window.dispatchEvent(new CustomEvent('openSymbol', { detail: s }));
-    }
+    router.push(`/symbol/${s.id}`);
   };
 
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

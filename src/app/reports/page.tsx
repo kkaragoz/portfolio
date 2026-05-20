@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Treemap, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { X, ExternalLink } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface GridData {  
   code: string | null;
@@ -76,8 +76,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<'USD' | 'TRY'>('USD');
   const [usdTry, setUsdTry] = useState<number | null>(null);
-  const [selectedSymbol, setSelectedSymbol] = useState<{ code: string; name: string; symbolId: number; url: string | null; note: string | null } | null>(null);
-  const [loadingSymbolDetail, setLoadingSymbolDetail] = useState(false);
+  const router = useRouter();
   const [gridSortField, setGridSortField] = useState<GridSortField>('code');
   const [gridSortDirection, setGridSortDirection] = useState<SortDirection>('asc');
   const [performanceGrid, setPerformanceGrid] = useState<PerformanceGridItem[]>([]);
@@ -192,21 +191,9 @@ export default function ReportsPage() {
     fetchAllPerformance();
   }, [gridData]);
 
-  const handleRowClick = async (item: GridData) => {
+  const handleRowClick = (item: GridData) => {
     if (item.symbol_id) {
-      setSelectedSymbol({ code: item.code || '', name: item.name || '', symbolId: item.symbol_id, url: null, note: null });
-      setLoadingSymbolDetail(true);
-      try {
-        const res = await fetch(`/api/symbols/${item.symbol_id}`);
-        if (res.ok) {
-          const symbolData = await res.json();
-          setSelectedSymbol({ code: item.code || '', name: item.name || '', symbolId: item.symbol_id, url: symbolData.url || null, note: symbolData.note || null });
-        }
-      } catch (e) {
-        // ignore
-      } finally {
-        setLoadingSymbolDetail(false);
-      }
+      router.push(`/symbol/${item.symbol_id}`);
     }
   };
 
@@ -663,68 +650,7 @@ const formatCurrency2Digits = (value: number) => {
         </div>
       </div>
 
-      {/* Performance Popup */}
-      {selectedSymbol && (
-        <div 
-          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedSymbol(null)}
-        >
-          <div 
-            className="card max-w-md w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--border-color)' }}>
-              <div>
-                <h3 className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>
-                  {selectedSymbol.code}
-                </h3>
-                {selectedSymbol.name && (
-                  <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{selectedSymbol.name}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                {selectedSymbol.url && (
-                  <button
-                    onClick={() => window.open(selectedSymbol.url!, '_blank', 'noopener,noreferrer')}
-                    className="p-1.5 rounded-md transition-colors"
-                    title="Web sayfasını aç"
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                  >
-                    <ExternalLink className="w-5 h-5" style={{ color: 'var(--accent)' }} />
-                  </button>
-                )}
-                <button
-                  onClick={() => setSelectedSymbol(null)}
-                  className="p-1.5 rounded-md transition-colors"
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                </button>
-              </div>
-            </div>
 
-            {/* Content */}
-            <div className="p-5">
-              {loadingSymbolDetail ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'var(--accent)' }}></div>
-                  <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>Yükleniyor...</p>
-                </div>
-              ) : (
-                <div>
-                  <h4 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>Açıklama</h4>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
-                    {selectedSymbol.note || 'Açıklama bulunmamaktadır.'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
